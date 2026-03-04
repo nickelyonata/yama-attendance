@@ -1,11 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta http-equiv="refresh" content="0;url=https://script.google.com/macros/s/AKfycbzmozOBRJ0j1b5iuCZmHR2L4wPNalWQeiE26jhBQf0w49Wha-sPPq6H4XqGOr1kO3at/exec?loc=Yama%202">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Yama Attendance</title>
 </head>
 <body>
   <script>
-    window.location.replace("https://script.google.com/macros/s/AKfycbzmozOBRJ0j1b5iuCZmHR2L4wPNalWQeiE26jhBQf0w49Wha-sPPq6H4XqGOr1kO3at/exec?loc=Yama%202");
+    // Force correct URL without /u/1/ that Google adds
+    const loc = new URLSearchParams(window.location.search).get('loc') || 'Yama 2';
+    const url = "https://script.google.com/macros/s/AKfycbzmozOBRJ0j1b5iuCZmHR2L4wPNalWQeiE26jhBQf0w49Wha-sPPq6H4XqGOr1kO3at/exec?loc=" + encodeURIComponent(loc);
+    window.location.replace(url);
   </script>
+  <p style="font-family:sans-serif; text-align:center; margin-top:50px;">Redirecting to Yama Attendance...</p>
 </body>
 </html>
