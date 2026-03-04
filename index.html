@@ -2,14 +2,29 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Yama Attendance</title>
 </head>
 <body>
   <script>
     const loc = new URLSearchParams(window.location.search).get('loc') || 'Yama 2';
-    // Always force the /macros/s/ version, never /u/1/
-    const url = "https://script.google.com/macros/s/AKfycbzmozOBRJ0j1b5iuCZmHR2L4wPNalWQeiE26jhBQf0w49Wha-sPPq6H4XqGOr1kO3at/exec?loc=" + encodeURIComponent(loc);
-    window.location.replace(url);
+    const baseUrl = "https://script.google.com/macros/s/AKfycbzmozOBRJ0j1b5iuCZmHR2L4wPNalWQeiE26jhBQf0w49Wha-sPPq6H4XqGOr1kO3at/exec";
+    const finalUrl = baseUrl + "?loc=" + encodeURIComponent(loc);
+    
+    // Open in a new tab to bypass Google account intercept
+    document.addEventListener("DOMContentLoaded", function() {
+      document.getElementById('btn').addEventListener('click', function() {
+        window.open(finalUrl, '_blank');
+      });
+    });
   </script>
-  <p style="font-family:sans-serif; text-align:center; margin-top:50px;">Loading Yama Attendance...</p>
+  <div style="font-family:sans-serif; text-align:center; margin-top:80px; background:#1a1a2e; min-height:100vh; padding:40px;">
+    <div style="background:white; border-radius:24px; padding:40px; max-width:380px; margin:0 auto;">
+      <h2 style="color:#2c3e50; margin-bottom:10px;">📍 Yama Attendance</h2>
+      <p style="color:#7f8c8d; margin-bottom:30px;">Tap below to clock in or out</p>
+      <button id="btn" style="width:100%; padding:20px; background:#27ae60; color:white; border:none; border-radius:12px; font-size:1.2em; font-weight:bold; cursor:pointer;">
+        ✅ Open Attendance
+      </button>
+    </div>
+  </div>
 </body>
 </html>
