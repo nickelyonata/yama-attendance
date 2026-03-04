@@ -2,15 +2,14 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Yama Attendance</title>
 </head>
 <body>
   <script>
-    // Force correct URL without /u/1/ that Google adds
     const loc = new URLSearchParams(window.location.search).get('loc') || 'Yama 2';
+    // Always force the /macros/s/ version, never /u/1/
     const url = "https://script.google.com/macros/s/AKfycbzmozOBRJ0j1b5iuCZmHR2L4wPNalWQeiE26jhBQf0w49Wha-sPPq6H4XqGOr1kO3at/exec?loc=" + encodeURIComponent(loc);
     window.location.replace(url);
   </script>
-  <p style="font-family:sans-serif; text-align:center; margin-top:50px;">Redirecting to Yama Attendance...</p>
+  <p style="font-family:sans-serif; text-align:center; margin-top:50px;">Loading Yama Attendance...</p>
 </body>
 </html>
