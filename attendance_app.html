@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Attendance — Yama Restaurant Group</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --brown-dark:   #2A1506;
+    --brown-mid:    #3D1E0A;
+    --brown-warm:   #5C2E0E;
+    --brown-light:  #7A3F18;
+    --gold:         #C8922A;
+    --gold-light:   #E4B860;
+    --gold-pale:    #F5DFA0;
+    --cream:        #F5EFE6;
+    --cream-dark:   #EDE4D6;
+    --cream-mid:    #E8DDD0;
+    --text-dark:    #1A0A02;
+    --text-mid:     #4A2E18;
+    --text-light:   #8A6A50;
+    --white:        #FFFFFF;
+    --success:      #4A7C59;
+    --success-light:#D4EDDA;
+    --danger:       #8B2E2E;
+    --danger-light: #FADBD8;
+    --warning:      #8B6914;
+    --warning-light:#FEF3CD;
+    --shadow-soft:  0 4px 24px rgba(42,21,6,0.12);
+    --shadow-card:  0 2px 12px rgba(42,21,6,0.10);
+    --radius:       14px;
+    --radius-sm:    8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text-dark);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── TOP BAR ── */
+  #topbar {
+    background: var(--brown-dark);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    height: 68px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.35);
+    position: sticky; top: 0; z-index: 100;
+  }
+  #topbar .brand {
+    display: flex; align-items: center; gap: 12px;
+  }
+  #topbar .brand .logo-icon {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  #topbar .brand .brand-text h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px; font-weight: 700;
+    color: var(--gold-light);
+    letter-spacing: 0.3px;
+    line-height: 1.1;
+  }
+  #topbar .brand .brand-text p {
+    font-size: 10px; font-weight: 500;
+    color: var(--gold-pale); opacity: 0.7;
+    letter-spacing: 1.5px; text-transform: uppercase;
+  }
+  #location-badge {
+    background: rgba(200,146,42,0.18);
+    border: 1px solid rgba(200,146,42,0.35);
+    color: var(--gold-light);
+    font-size: 12px; font-weight: 600;
+    padding: 6px 14px; border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+  #clock-display {
+    text-align: right;
+  }
+  #clock-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px; font-weight: 500;
+    color: var(--white);
+    letter-spacing: 1px;
+  }
+  #clock-date {
+    font-size: 11px; color: rgba(255,255,255,0.5);
+    letter-spacing: 0.5px; margin-top: 1px;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── SETUP SCREEN ── */
+  #screen-setup {
+    min-height: calc(100vh - 68px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 40px 20px;
+  }
+  #screen-setup.active { display: flex; }
+  .setup-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 48px 40px;
+    max-width: 480px; width: 100%;
+    box-shadow: var(--shadow-soft);
+    text-align: center;
+  }
+  .setup-card .setup-icon {
+    font-size: 48px; margin-bottom: 20px;
+  }
+  .setup-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px; color: var(--brown-dark);
+    margin-bottom: 8px;
+  }
+  .setup-card p {
+    color: var(--text-light); font-size: 14px; margin-bottom: 28px;
+  }
+  .setup-card select, .setup-card input[type="password"], .setup-card input[type="text"] {
+    width: 100%; padding: 14px 16px;
+    border: 1.5px solid var(--cream-mid);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; color: var(--text-dark);
+    background: var(--cream);
+    margin-bottom: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .setup-card select:focus, .setup-card input:focus {
+    border-color: var(--gold);
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 14px 28px;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 600;
+    letter-spacing: 0.3px;
+    cursor: pointer; border: none;
+    transition: all 0.18s;
+    text-transform: uppercase;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--brown-warm), var(--brown-light));
+    color: var(--gold-pale);
+    box-shadow: 0 4px 14px rgba(92,46,14,0.35);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(92,46,14,0.45); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-gold {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--brown-dark);
+    box-shadow: 0 4px 14px rgba(200,146,42,0.35);
+  }
+  .btn-gold:hover { transform: translateY(-1px); }
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--cream-mid);
+    color: var(--text-mid);
+  }
+  .btn-outline:hover { background: var(--cream-dark); }
+  .btn-danger {
+    background: var(--danger-light);
+    color: var(--danger);
+    border: 1.5px solid rgba(139,46,46,0.2);
+  }
+  .btn-danger:hover { background: #f5c6c6; }
+  .btn-full { width: 100%; }
+  .btn-lg { padding: 18px 32px; font-size: 15px; }
+
+  /* ── HOME SCREEN ── */
+  #screen-home {
+    padding: 32px 28px;
+    max-width: 900px; margin: 0 auto;
+  }
+  .home-header {
+    text-align: center; margin-bottom: 36px;
+  }
+  .home-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px; color: var(--brown-dark);
+    margin-bottom: 6px;
+  }
+  .home-header p { color: var(--text-light); font-size: 14px; }
+
+  .search-bar {
+    position: relative; margin-bottom: 28px;
+  }
+  .search-bar input {
+    width: 100%; padding: 14px 16px 14px 46px;
+    border: 1.5px solid var(--cream-mid);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; color: var(--text-dark);
+    background: var(--white);
+    outline: none;
+    box-shadow: var(--shadow-card);
+    transition: border-color 0.2s;
+  }
+  .search-bar input:focus { border-color: var(--gold); }
+  .search-bar .search-icon {
+    position: absolute; left: 16px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-light); font-size: 18px;
+  }
+
+  /* Employee grid */
+  #employee-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .emp-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-card);
+    border: 2px solid transparent;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .emp-card:hover {
+    border-color: var(--gold);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-soft);
+  }
+  .emp-card .emp-avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--brown-warm), var(--gold));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; font-weight: 700;
+    color: var(--white);
+    margin: 0 auto 12px;
+    box-shadow: 0 3px 10px rgba(92,46,14,0.3);
+  }
+  .emp-card .emp-name {
+    font-weight: 600; font-size: 14px;
+    color: var(--text-dark); margin-bottom: 3px;
+  }
+  .emp-card .emp-nick {
+    font-size: 12px; color: var(--text-light); margin-bottom: 8px;
+  }
+  .emp-card .emp-position {
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--gold); background: rgba(200,146,42,0.1);
+    padding: 3px 10px; border-radius: 12px;
+    display: inline-block;
+  }
+  /* Status indicators on card */
+  .emp-card .status-dot {
+    position: absolute; top: 12px; right: 12px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #ccc;
+  }
+  .emp-card.status-clocked-in .status-dot { background: var(--success); box-shadow: 0 0 0 3px rgba(74,124,89,0.2); }
+  .emp-card.status-on-break .status-dot { background: var(--warning); box-shadow: 0 0 0 3px rgba(139,105,20,0.2); }
+  .emp-card.status-clocked-out .status-dot { background: #ccc; }
+
+  .emp-card .status-label {
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    margin-top: 6px;
+    display: block;
+  }
+  .emp-card.status-clocked-in .status-label { color: var(--success); }
+  .emp-card.status-on-break .status-label { color: var(--warning); }
+
+  /* No PIN warning on card */
+  .emp-card.no-pin { opacity: 0.5; cursor: not-allowed; }
+  .emp-card.no-pin:hover { transform: none; border-color: transparent; }
+
+  /* ── PIN SCREEN ── */
+  #screen-pin {
+    min-height: calc(100vh - 68px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 30px 20px;
+  }
+  #screen-pin.active { display: flex; }
+  .pin-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 40px 36px;
+    max-width: 400px; width: 100%;
+    box-shadow: var(--shadow-soft);
+    text-align: center;
+  }
+  .pin-card .pin-employee-avatar {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--brown-warm), var(--gold));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 28px; font-weight: 700;
+    color: var(--white);
+    margin: 0 auto 16px;
+    box-shadow: 0 4px 14px rgba(92,46,14,0.3);
+  }
+  .pin-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; color: var(--brown-dark);
+    margin-bottom: 4px;
+  }
+  .pin-card .pin-position {
+    font-size: 12px; color: var(--text-light);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 20px;
+  }
+  /* action selector */
+  .action-tabs {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; margin-bottom: 24px;
+  }
+  .action-tab {
+    padding: 12px 8px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--cream-mid);
+    background: var(--cream);
+    font-size: 12px; font-weight: 600;
+    color: var(--text-mid);
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: center;
+  }
+  .action-tab:hover { border-color: var(--gold); background: rgba(200,146,42,0.05); }
+  .action-tab.selected {
+    border-color: var(--gold);
+    background: rgba(200,146,42,0.12);
+    color: var(--brown-warm);
+  }
+  .action-tab.disabled {
+    opacity: 0.35; cursor: not-allowed; pointer-events: none;
+  }
+  .action-tab .tab-icon { font-size: 20px; margin-bottom: 4px; }
+
+  /* PIN dots */
+  .pin-dots {
+    display: flex; justify-content: center; gap: 14px;
+    margin: 20px 0;
+  }
+  .pin-dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid var(--cream-mid);
+    background: transparent;
+    transition: all 0.15s;
+  }
+  .pin-dot.filled {
+    background: var(--brown-warm);
+    border-color: var(--brown-warm);
+  }
+
+  /* numpad */
+  .numpad {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 10px; margin-bottom: 20px;
+  }
+  .num-btn {
+    height: 64px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--cream-mid);
+    background: var(--cream);
+    font-family: 'DM Mono', monospace;
+    font-size: 22px; font-weight: 500;
+    color: var(--text-dark);
+    cursor: pointer;
+    transition: all 0.12s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .num-btn:hover { background: var(--cream-dark); border-color: var(--gold-pale); }
+  .num-btn:active { transform: scale(0.96); background: var(--cream-mid); }
+  .num-btn.del { font-size: 18px; color: var(--text-light); }
+  .num-btn.confirm {
+    background: linear-gradient(135deg, var(--brown-warm), var(--brown-light));
+    color: var(--gold-pale); border-color: transparent;
+    font-size: 16px; font-weight: 700; letter-spacing: 1px;
+  }
+  .num-btn.confirm:hover { transform: scale(1.02); }
+
+  .pin-error {
+    background: var(--danger-light);
+    color: var(--danger);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 13px; font-weight: 500;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  /* ── SUCCESS SCREEN ── */
+  #screen-success {
+    min-height: calc(100vh - 68px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 30px 20px;
+  }
+  #screen-success.active { display: flex; }
+  .success-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 48px 40px;
+    max-width: 440px; width: 100%;
+    box-shadow: var(--shadow-soft);
+    text-align: center;
+  }
+  .success-icon-wrap {
+    width: 80px; height: 80px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px; margin: 0 auto 20px;
+  }
+  .success-icon-wrap.green { background: var(--success-light); }
+  .success-icon-wrap.orange { background: var(--warning-light); }
+  .success-icon-wrap.grey { background: var(--cream-mid); }
+  .success-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px; color: var(--brown-dark);
+    margin-bottom: 8px;
+  }
+  .success-card .success-detail {
+    font-size: 14px; color: var(--text-light); margin-bottom: 6px;
+  }
+  .success-card .success-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 28px; color: var(--brown-warm);
+    font-weight: 500; margin: 12px 0 20px;
+  }
+  .success-countdown {
+    font-size: 12px; color: var(--text-light);
+    margin-top: 16px;
+  }
+
+  /* ── ADMIN SCREEN ── */
+  #screen-admin {
+    padding: 28px;
+    max-width: 960px; margin: 0 auto;
+  }
+  .admin-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px;
+  }
+  .admin-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px; color: var(--brown-dark);
+  }
+  .admin-tabs {
+    display: flex; gap: 8px; margin-bottom: 24px;
+    border-bottom: 2px solid var(--cream-mid);
+    padding-bottom: 0;
+  }
+  .admin-tab-btn {
+    padding: 10px 20px;
+    border: none; background: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 600;
+    color: var(--text-light); cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.18s;
+  }
+  .admin-tab-btn.active { color: var(--brown-warm); border-bottom-color: var(--gold); }
+
+  /* PIN management table */
+  .admin-table-wrap { overflow-x: auto; }
+  .admin-table {
+    width: 100%; border-collapse: collapse;
+    background: var(--white);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+  }
+  .admin-table th {
+    background: var(--brown-dark);
+    color: var(--gold-pale);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 14px 16px; text-align: left;
+  }
+  .admin-table td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--cream-mid);
+    font-size: 14px; color: var(--text-dark);
+  }
+  .admin-table tr:last-child td { border-bottom: none; }
+  .admin-table tr:hover td { background: var(--cream); }
+  .pin-input-cell {
+    display: flex; gap: 8px; align-items: center;
+  }
+  .pin-input-cell input {
+    width: 90px; padding: 8px 10px;
+    border: 1.5px solid var(--cream-mid);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Mono', monospace;
+    font-size: 15px; text-align: center;
+    outline: none; background: var(--cream);
+    color: var(--text-dark);
+    transition: border-color 0.2s;
+  }
+  .pin-input-cell input:focus { border-color: var(--gold); }
+  .btn-save-pin {
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: var(--gold);
+    color: var(--brown-dark);
+    font-size: 12px; font-weight: 700;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-save-pin:hover { background: var(--gold-light); }
+
+  /* Today's log */
+  .log-table { width: 100%; border-collapse: collapse;
+    background: var(--white); border-radius: var(--radius);
+    overflow: hidden; box-shadow: var(--shadow-card); }
+  .log-table th {
+    background: var(--brown-mid); color: var(--gold-pale);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 12px 14px; text-align: left;
+  }
+  .log-table td {
+    padding: 11px 14px; border-bottom: 1px solid var(--cream-mid);
+    font-size: 13px; color: var(--text-dark);
+  }
+  .log-table tr:last-child td { border-bottom: none; }
+  .log-table tr:hover td { background: var(--cream); }
+
+  /* status badges */
+  .badge {
+    display: inline-block; padding: 3px 10px;
+    border-radius: 12px; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .badge-in { background: var(--success-light); color: var(--success); }
+  .badge-break { background: var(--warning-light); color: var(--warning); }
+  .badge-out { background: var(--cream-mid); color: var(--text-light); }
+
+  /* Admin login */
+  #screen-admin-login {
+    min-height: calc(100vh - 68px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 30px 20px;
+  }
+  #screen-admin-login.active { display: flex; }
+  .admin-login-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 48px 40px;
+    max-width: 400px; width: 100%;
+    box-shadow: var(--shadow-soft);
+    text-align: center;
+  }
+
+  /* loading spinner */
+  .spinner-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 16px; padding: 48px;
+  }
+  .spinner {
+    width: 44px; height: 44px;
+    border: 3px solid var(--cream-mid);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner-label { color: var(--text-light); font-size: 14px; }
+
+  /* error banner */
+  .error-banner {
+    background: var(--danger-light);
+    border: 1px solid rgba(139,46,46,0.2);
+    color: var(--danger);
+    border-radius: var(--radius-sm);
+    padding: 14px 18px; margin-bottom: 20px;
+    font-size: 14px; display: none;
+  }
+
+  /* config info panel */
+  .config-panel {
+    background: var(--cream);
+    border: 1.5px solid var(--cream-mid);
+    border-radius: var(--radius);
+    padding: 20px 24px; margin-bottom: 28px;
+  }
+  .config-panel h4 {
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text-light); margin-bottom: 12px;
+  }
+  .config-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .config-row:last-child { margin-bottom: 0; }
+  .config-row label { font-size: 13px; color: var(--text-mid); }
+  .config-row .config-val {
+    font-size: 13px; font-weight: 600; color: var(--text-dark);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* floating admin button */
+  #admin-fab {
+    position: fixed; bottom: 28px; right: 28px;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--brown-dark);
+    border: 2px solid rgba(200,146,42,0.3);
+    color: var(--gold-light); font-size: 22px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; box-shadow: var(--shadow-soft);
+    transition: all 0.2s; z-index: 50;
+  }
+  #admin-fab:hover { transform: scale(1.1); background: var(--brown-warm); }
+
+  /* sync status */
+  .sync-status {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--text-light);
+    margin-bottom: 20px;
+  }
+  .sync-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--success);
+  }
+  .sync-dot.offline { background: #ccc; }
+  .sync-dot.syncing {
+    background: var(--warning);
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* toast notification */
+  #toast {
+    position: fixed; bottom: 90px; right: 28px;
+    background: var(--brown-dark);
+    color: var(--gold-pale);
+    padding: 12px 20px; border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 500;
+    box-shadow: var(--shadow-soft);
+    transform: translateY(20px); opacity: 0;
+    transition: all 0.3s; z-index: 200;
+    pointer-events: none;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  /* responsive tablet adjustments */
+  @media (max-width: 600px) {
+    #topbar { padding: 0 16px; }
+    #screen-home { padding: 24px 16px; }
+    #employee-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    .setup-card, .pin-card, .success-card, .admin-login-card { padding: 32px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════
+     CONFIG — CHANGE PER TABLET
+══════════════════════════════════ -->
+<script>
+// ┌─────────────────────────────────────────┐
+// │  TABLET CONFIGURATION — EDIT THIS ONLY  │
+// └─────────────────────────────────────────┘
+const TABLET_CONFIG = {
+  // Location for this tablet. Must EXACTLY match value in Google Sheet.
+  // Options: "Yama Spring Mountain" | "Yama Flamingo" | "Yama Cheyenne" | "Yama Fremont" | "Kimchi"
+  LOCATION: "",  // Leave blank for setup screen on first launch
+
+  // Your deployed Google Apps Script Web App URL
+  APPS_SCRIPT_URL: "YOUR_APPS_SCRIPT_URL_HERE",
+
+  // Admin passwords per location
+  ADMIN_PASSWORDS: {
+    "Yama Spring Mountain": "admin1234",
+    "Yama Flamingo":        "admin1234",
+    "Yama Cheyenne":        "admin1234",
+    "Yama Fremont":         "admin1234",
+    "Kimchi":               "admin1234"
+  },
+
+  // Auto-return to home after success (seconds)
+  SUCCESS_TIMEOUT: 6,
+
+  // How often to refresh employee list (ms)
+  REFRESH_INTERVAL: 300000 // 5 minutes
+};
+</script>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="brand">
+    <div class="logo-icon">🍣</div>
+    <div class="brand-text">
+      <h1>Yama Restaurant Group</h1>
+      <p>Attendance System</p>
+    </div>
+  </div>
+  <span id="location-badge">— No Location Set —</span>
+  <div id="clock-display">
+    <div id="clock-time">00:00:00</div>
+    <div id="clock-date">Loading...</div>
+  </div>
+</div>
+
+<!-- ADMIN FAB -->
+<div id="admin-fab" title="Admin Panel">⚙</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════ SCREENS ══════════════════════════════════ -->
+
+<!-- SETUP SCREEN -->
+<div id="screen-setup" class="screen">
+  <div class="setup-card">
+    <div class="setup-icon">🏪</div>
+    <h2>Location Setup</h2>
+    <p>Select the restaurant location for this tablet, then enter the setup password.</p>
+    <select id="setup-location">
+      <option value="">— Select Location —</option>
+      <option>Yama Spring Mountain</option>
+      <option>Yama Flamingo</option>
+      <option>Yama Cheyenne</option>
+      <option>Yama Fremont</option>
+      <option>Kimchi</option>
+    </select>
+    <input type="text" id="setup-script-url" placeholder="Apps Script URL (paste here)" />
+    <input type="password" id="setup-password" placeholder="Setup password" />
+    <div class="error-banner" id="setup-error">Incorrect password. Please try again.</div>
+    <button class="btn btn-primary btn-full btn-lg" onclick="confirmSetup()">
+      ✓ &nbsp; Confirm & Launch
+    </button>
+  </div>
+</div>
+
+<!-- HOME SCREEN -->
+<div id="screen-home" class="screen">
+  <div class="home-header">
+    <h2>Select Your Name</h2>
+    <p>Find your name and tap to clock in or out</p>
+  </div>
+  <div class="sync-status" id="sync-status">
+    <div class="sync-dot syncing" id="sync-dot"></div>
+    <span id="sync-label">Connecting to Google Sheets...</span>
+  </div>
+  <div class="search-bar">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="search-input" placeholder="Search by name..." oninput="filterEmployees()" />
+  </div>
+  <div id="employee-grid">
+    <div class="spinner-wrap">
+      <div class="spinner"></div>
+      <div class="spinner-label">Loading employees...</div>
+    </div>
+  </div>
+</div>
+
+<!-- PIN SCREEN -->
+<div id="screen-pin" class="screen">
+  <div class="pin-card">
+    <div class="pin-employee-avatar" id="pin-avatar">?</div>
+    <h3 id="pin-name">Employee Name</h3>
+    <div class="pin-position" id="pin-position">Position</div>
+
+    <!-- Action selector -->
+    <div class="action-tabs" id="action-tabs">
+      <div class="action-tab" id="tab-clockin" onclick="selectAction('CLOCK_IN')">
+        <div class="tab-icon">🟢</div>
+        <div>Clock In</div>
+      </div>
+      <div class="action-tab" id="tab-clockout" onclick="selectAction('CLOCK_OUT')">
+        <div class="tab-icon">🔴</div>
+        <div>Clock Out</div>
+      </div>
+      <div class="action-tab" id="tab-breakstart" onclick="selectAction('BREAK_START')">
+        <div class="tab-icon">☕</div>
+        <div>Start Break</div>
+      </div>
+      <div class="action-tab" id="tab-breakend" onclick="selectAction('BREAK_END')">
+        <div class="tab-icon">▶️</div>
+        <div>End Break</div>
+      </div>
+    </div>
+
+    <div class="pin-error" id="pin-error">Incorrect PIN. Please try again.</div>
+
+    <!-- PIN dots -->
+    <div class="pin-dots">
+      <div class="pin-dot" id="dot-0"></div>
+      <div class="pin-dot" id="dot-1"></div>
+      <div class="pin-dot" id="dot-2"></div>
+      <div class="pin-dot" id="dot-3"></div>
+    </div>
+
+    <!-- Numpad -->
+    <div class="numpad">
+      <button class="num-btn" onclick="numPress('1')">1</button>
+      <button class="num-btn" onclick="numPress('2')">2</button>
+      <button class="num-btn" onclick="numPress('3')">3</button>
+      <button class="num-btn" onclick="numPress('4')">4</button>
+      <button class="num-btn" onclick="numPress('5')">5</button>
+      <button class="num-btn" onclick="numPress('6')">6</button>
+      <button class="num-btn" onclick="numPress('7')">7</button>
+      <button class="num-btn" onclick="numPress('8')">8</button>
+      <button class="num-btn" onclick="numPress('9')">9</button>
+      <button class="num-btn del" onclick="numDel()">⌫</button>
+      <button class="num-btn" onclick="numPress('0')">0</button>
+      <button class="num-btn confirm" onclick="numConfirm()">OK</button>
+    </div>
+
+    <button class="btn btn-outline btn-full" onclick="showScreen('home')">← Back</button>
+  </div>
+</div>
+
+<!-- SUCCESS SCREEN -->
+<div id="screen-success" class="screen">
+  <div class="success-card">
+    <div class="success-icon-wrap" id="success-icon-wrap">✅</div>
+    <h3 id="success-title">Clocked In!</h3>
+    <div class="success-detail" id="success-name-detail"></div>
+    <div class="success-time" id="success-time-display"></div>
+    <div class="success-detail" id="success-shift-info"></div>
+    <div class="success-countdown" id="success-countdown">Returning in 6 seconds...</div>
+  </div>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div id="screen-admin-login" class="screen">
+  <div class="admin-login-card">
+    <div style="font-size:44px;margin-bottom:16px">🔐</div>
+    <h2 style="font-family:'Playfair Display',serif;font-size:24px;color:var(--brown-dark);margin-bottom:8px">Admin Panel</h2>
+    <p style="color:var(--text-light);font-size:14px;margin-bottom:24px">Enter the admin password for this location</p>
+    <input type="password" id="admin-pass-input" placeholder="Admin password"
+      style="width:100%;padding:14px 16px;border:1.5px solid var(--cream-mid);border-radius:var(--radius-sm);font-size:15px;font-family:'DM Sans',sans-serif;background:var(--cream);outline:none;margin-bottom:14px;color:var(--text-dark);"
+      onkeydown="if(event.key==='Enter')adminLogin()" />
+    <div class="error-banner" id="admin-login-error">Incorrect password.</div>
+    <button class="btn btn-primary btn-full btn-lg" onclick="adminLogin()" style="margin-bottom:12px">Login</button>
+    <button class="btn btn-outline btn-full" onclick="showScreen('home')">← Cancel</button>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="screen-admin" class="screen">
+  <div class="admin-header">
+    <h2>⚙ Admin Panel</h2>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-outline" onclick="refreshEmployees()">↻ Refresh Data</button>
+      <button class="btn btn-danger" onclick="adminLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="config-panel">
+    <h4>Tablet Configuration</h4>
+    <div class="config-row">
+      <label>Location</label>
+      <span class="config-val" id="admin-location-val">—</span>
+    </div>
+    <div class="config-row">
+      <label>Scripts URL</label>
+      <span class="config-val" id="admin-url-val" style="font-size:11px;max-width:300px;word-break:break-all;">—</span>
+    </div>
+    <div class="config-row">
+      <label>Employees Loaded</label>
+      <span class="config-val" id="admin-emp-count">—</span>
+    </div>
+    <div class="config-row">
+      <label>Last Sync</label>
+      <span class="config-val" id="admin-last-sync">—</span>
+    </div>
+  </div>
+
+  <div class="admin-tabs">
+    <button class="admin-tab-btn active" onclick="switchAdminTab('pins')">👤 Manage PINs</button>
+    <button class="admin-tab-btn" onclick="switchAdminTab('log')">📋 Today's Log</button>
+    <button class="admin-tab-btn" onclick="switchAdminTab('settings')">🔧 Settings</button>
+  </div>
+
+  <!-- Pins Tab -->
+  <div id="admin-tab-pins">
+    <div class="admin-table-wrap">
+      <table class="admin-table" id="pin-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Employee Name</th>
+            <th>Nickname</th>
+            <th>Position</th>
+            <th>PIN</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="pin-table-body">
+          <tr><td colspan="6" style="text-align:center;color:var(--text-light);padding:28px">Loading employees...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Log Tab -->
+  <div id="admin-tab-log" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <span style="font-size:13px;color:var(--text-light)">Showing attendance log for today</span>
+      <button class="btn btn-outline" onclick="loadTodayLog()" style="padding:8px 16px;font-size:12px">↻ Refresh</button>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="log-table" id="log-table">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Clock In</th>
+            <th>Break Start</th>
+            <th>Break End</th>
+            <th>Clock Out</th>
+            <th>Total Hours</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="log-table-body">
+          <tr><td colspan="7" style="text-align:center;color:var(--text-light);padding:28px">Loading log...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Settings Tab -->
+  <div id="admin-tab-settings" style="display:none">
+    <div class="setup-card" style="max-width:100%;text-align:left">
+      <h3 style="font-family:'Playfair Display',serif;font-size:20px;color:var(--brown-dark);margin-bottom:16px">Reset Tablet Location</h3>
+      <p style="color:var(--text-light);font-size:14px;margin-bottom:20px">This will clear the location setting and show the setup screen on next load. Use this if moving this tablet to a different restaurant.</p>
+      <button class="btn btn-danger" onclick="resetTablet()">🗑 Reset Tablet Setup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════════ -->
+<script>
+// ─── App State ───
+let APP = {
+  location: "",
+  scriptUrl: "",
+  employees: [],        // [{id, name, nickname, position, pin, status, clockInTime, breakStartTime}]
+  selectedEmployee: null,
+  selectedAction: null,
+  pinEntry: "",
+  adminLoggedIn: false,
+  lastSync: null,
+  todayLog: []
+};
+
+// ─── Clock ───
+function updateClock() {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true});
+  const dateStr = now.toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  document.getElementById('clock-time').textContent = timeStr;
+  document.getElementById('clock-date').textContent = dateStr;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ─── Screen management ───
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+}
+
+// ─── Init ───
+function init() {
+  const savedLocation = localStorage.getItem('yama_location');
+  const savedUrl      = localStorage.getItem('yama_script_url');
+
+  if (savedLocation && savedUrl) {
+    APP.location  = savedLocation;
+    APP.scriptUrl = savedUrl;
+    document.getElementById('location-badge').textContent = savedLocation;
+    showScreen('home');
+    refreshEmployees();
+    setInterval(refreshEmployees, TABLET_CONFIG.REFRESH_INTERVAL);
+  } else if (TABLET_CONFIG.LOCATION && TABLET_CONFIG.APPS_SCRIPT_URL !== "YOUR_APPS_SCRIPT_URL_HERE") {
+    APP.location  = TABLET_CONFIG.LOCATION;
+    APP.scriptUrl = TABLET_CONFIG.APPS_SCRIPT_URL;
+    document.getElementById('location-badge').textContent = APP.location;
+    showScreen('home');
+    refreshEmployees();
+    setInterval(refreshEmployees, TABLET_CONFIG.REFRESH_INTERVAL);
+  } else {
+    showScreen('setup');
+  }
+}
+
+// ─── Setup ───
+function confirmSetup() {
+  const loc = document.getElementById('setup-location').value;
+  const url = document.getElementById('setup-script-url').value.trim();
+  const pwd = document.getElementById('setup-password').value;
+
+  if (!loc) { showError('setup-error', 'Please select a location.'); return; }
+  if (!url || url === 'YOUR_APPS_SCRIPT_URL_HERE') { showError('setup-error', 'Please enter your Apps Script URL.'); return; }
+
+  const correctPwd = TABLET_CONFIG.ADMIN_PASSWORDS[loc] || 'admin1234';
+  if (pwd !== correctPwd) {
+    showError('setup-error', 'Incorrect password.');
+    return;
+  }
+
+  localStorage.setItem('yama_location', loc);
+  localStorage.setItem('yama_script_url', url);
+  APP.location  = loc;
+  APP.scriptUrl = url;
+  document.getElementById('location-badge').textContent = loc;
+  document.getElementById('setup-error').style.display = 'none';
+  showScreen('home');
+  refreshEmployees();
+  setInterval(refreshEmployees, TABLET_CONFIG.REFRESH_INTERVAL);
+}
+
+// ─── Fetch employees from Apps Script ───
+async function refreshEmployees() {
+  setSyncState('syncing', 'Syncing with Google Sheets...');
+  try {
+    const res = await fetch(`${APP.scriptUrl}?action=getEmployees&location=${encodeURIComponent(APP.location)}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    // Preserve live status from existing employees
+    const statusMap = {};
+    APP.employees.forEach(e => { statusMap[e.id] = { status: e.status, clockInTime: e.clockInTime, breakStartTime: e.breakStartTime }; });
+
+    APP.employees = data.employees.map(e => ({
+      id:             e.EMPLOYEE_ID || e['EMPLOYEE ID'] || '',
+      name:           e.EMPLOYEE_NAME || e['EMPLOYEE NAME'] || '',
+      nickname:       e.NICK_NAME || e['NICK NAME'] || e.NICKNAME || '',
+      position:       e.POSITION || '',
+      pin:            String(e.PIN || ''),
+      ...(statusMap[e.EMPLOYEE_ID || e['EMPLOYEE ID']] || { status: 'out', clockInTime: null, breakStartTime: null })
+    }));
+
+    APP.lastSync = new Date();
+    setSyncState('online', `Synced · ${APP.employees.length} employees`);
+    renderEmployees(APP.employees);
+  } catch (err) {
+    setSyncState('offline', 'Offline — showing cached data');
+    console.error('Fetch error:', err);
+    if (APP.employees.length === 0) {
+      document.getElementById('employee-grid').innerHTML =
+        `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--danger)">
+          ⚠ Could not connect to Google Sheets.<br>
+          <small style="color:var(--text-light)">Check your Apps Script URL in Admin → Settings</small>
+        </div>`;
+    }
+  }
+}
+
+function setSyncState(state, label) {
+  const dot = document.getElementById('sync-dot');
+  dot.className = 'sync-dot' + (state === 'online' ? '' : state === 'syncing' ? ' syncing' : ' offline');
+  document.getElementById('sync-label').textContent = label;
+}
+
+// ─── Render employee cards ───
+function renderEmployees(list) {
+  const grid = document.getElementById('employee-grid');
+  if (!list || list.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-light)">No employees found for this location.</div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(emp => {
+    const initials = getInitials(emp.name);
+    const hasPin = emp.pin && emp.pin.length === 4;
+    const statusClass = emp.status === 'in' ? 'status-clocked-in' : emp.status === 'break' ? 'status-on-break' : 'status-clocked-out';
+    const statusLabel = emp.status === 'in' ? 'Clocked In' : emp.status === 'break' ? 'On Break' : '';
+    const noPinClass = hasPin ? '' : 'no-pin';
+    const noPinNote = hasPin ? '' : `<div style="font-size:10px;color:var(--danger);margin-top:4px">No PIN set</div>`;
+
+    return `
+      <div class="emp-card ${statusClass} ${noPinClass}" onclick="${hasPin ? `selectEmployee('${emp.id}')` : 'showToast(\"No PIN set — ask Admin to add one\")'}" >
+        <div class="status-dot"></div>
+        <div class="emp-avatar">${initials}</div>
+        <div class="emp-name">${emp.name}</div>
+        ${emp.nickname ? `<div class="emp-nick">"${emp.nickname}"</div>` : ''}
+        <div class="emp-position">${emp.position || '—'}</div>
+        ${statusLabel ? `<span class="status-label">${statusLabel}</span>` : ''}
+        ${noPinNote}
+      </div>`;
+  }).join('');
+}
+
+function filterEmployees() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const filtered = APP.employees.filter(e =>
+    e.name.toLowerCase().includes(q) ||
+    (e.nickname || '').toLowerCase().includes(q)
+  );
+  renderEmployees(filtered);
+}
+
+function getInitials(name) {
+  const parts = (name || '').trim().split(' ');
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return (name || '?').substring(0, 2).toUpperCase();
+}
+
+// ─── Select employee → PIN screen ───
+function selectEmployee(empId) {
+  const emp = APP.employees.find(e => e.id === empId);
+  if (!emp) return;
+  APP.selectedEmployee = emp;
+  APP.pinEntry = '';
+  APP.selectedAction = null;
+
+  document.getElementById('pin-avatar').textContent = getInitials(emp.name);
+  document.getElementById('pin-name').textContent = emp.name;
+  document.getElementById('pin-position').textContent = emp.position || '';
+  document.getElementById('pin-error').style.display = 'none';
+
+  updatePinDots();
+  updateActionTabs(emp);
+  showScreen('pin');
+}
+
+function updateActionTabs(emp) {
+  const isIn    = emp.status === 'in';
+  const isBreak = emp.status === 'break';
+  const isOut   = emp.status === 'out' || !emp.status;
+
+  // Enable/disable tabs based on current status
+  setTabState('tab-clockin',    isOut,   'CLOCK_IN');
+  setTabState('tab-clockout',   isIn || isBreak, 'CLOCK_OUT');
+  setTabState('tab-breakstart', isIn,    'BREAK_START');
+  setTabState('tab-breakend',   isBreak, 'BREAK_END');
+
+  // Auto-select the most logical action
+  if (isOut)   selectAction('CLOCK_IN');
+  else if (isBreak) selectAction('BREAK_END');
+  else if (isIn)    selectAction('CLOCK_OUT');
+}
+
+function setTabState(tabId, enabled, action) {
+  const el = document.getElementById(tabId);
+  if (enabled) {
+    el.classList.remove('disabled');
+    el.onclick = () => selectAction(action);
+  } else {
+    el.classList.add('disabled');
+    el.classList.remove('selected');
+    el.onclick = null;
+  }
+}
+
+function selectAction(action) {
+  APP.selectedAction = action;
+  document.querySelectorAll('.action-tab').forEach(t => t.classList.remove('selected'));
+  const map = { CLOCK_IN:'tab-clockin', CLOCK_OUT:'tab-clockout', BREAK_START:'tab-breakstart', BREAK_END:'tab-breakend' };
+  const el = document.getElementById(map[action]);
+  if (el && !el.classList.contains('disabled')) el.classList.add('selected');
+  APP.pinEntry = '';
+  updatePinDots();
+  document.getElementById('pin-error').style.display = 'none';
+}
+
+// ─── Numpad ───
+function numPress(digit) {
+  if (APP.pinEntry.length >= 4) return;
+  APP.pinEntry += digit;
+  updatePinDots();
+  if (APP.pinEntry.length === 4) setTimeout(numConfirm, 120);
+}
+function numDel() {
+  APP.pinEntry = APP.pinEntry.slice(0, -1);
+  updatePinDots();
+}
+function updatePinDots() {
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('dot-' + i).classList.toggle('filled', i < APP.pinEntry.length);
+  }
+}
+function numConfirm() {
+  if (!APP.selectedAction) { showToast('Please select an action first'); return; }
+  if (APP.pinEntry.length < 4) { showToast('Enter your 4-digit PIN'); return; }
+  if (APP.pinEntry !== APP.selectedEmployee.pin) {
+    document.getElementById('pin-error').style.display = 'block';
+    APP.pinEntry = '';
+    updatePinDots();
+    // Shake animation
+    const card = document.querySelector('.pin-card');
+    card.style.animation = 'none';
+    setTimeout(() => { card.style.animation = ''; }, 10);
+    return;
+  }
+  document.getElementById('pin-error').style.display = 'none';
+  submitAttendance();
+}
+
+// ─── Submit attendance event ───
+async function submitAttendance() {
+  const emp    = APP.selectedEmployee;
+  const action = APP.selectedAction;
+  const now    = new Date();
+
+  // Update local status
+  if      (action === 'CLOCK_IN')    { emp.status = 'in';    emp.clockInTime = now; }
+  else if (action === 'CLOCK_OUT')   { emp.status = 'out'; }
+  else if (action === 'BREAK_START') { emp.status = 'break'; emp.breakStartTime = now; }
+  else if (action === 'BREAK_END')   { emp.status = 'in'; }
+
+  showSuccessScreen(emp, action, now);
+
+  // Send to Google Sheets (background)
+  try {
+    const payload = {
+      action:       'logAttendance',
+      location:     APP.location,
+      employeeId:   emp.id,
+      employeeName: emp.name,
+      eventType:    action,
+      timestamp:    now.toISOString(),
+      clockInTime:  emp.clockInTime ? emp.clockInTime.toISOString() : null
+    };
+    await fetch(APP.scriptUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    });
+  } catch (err) {
+    console.error('Log error:', err);
+    showToast('⚠ Saved locally — will sync when online');
+  }
+}
+
+// ─── Success screen ───
+let successTimer = null;
+function showSuccessScreen(emp, action, now) {
+  const iconWrap = document.getElementById('success-icon-wrap');
+  const iconMap  = { CLOCK_IN: ['✅','green'], CLOCK_OUT: ['👋','grey'], BREAK_START: ['☕','orange'], BREAK_END: ['▶️','green'] };
+  const titleMap = { CLOCK_IN: 'Clocked In!', CLOCK_OUT: 'Clocked Out!', BREAK_START: 'Break Started!', BREAK_END: 'Back to Work!' };
+  const [icon, color] = iconMap[action];
+
+  iconWrap.textContent = icon;
+  iconWrap.className   = `success-icon-wrap ${color}`;
+  document.getElementById('success-title').textContent      = titleMap[action];
+  document.getElementById('success-name-detail').textContent = emp.name;
+  document.getElementById('success-time-display').textContent = now.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true});
+  document.getElementById('success-shift-info').textContent  = formatShiftInfo(emp, action, now);
+
+  let countdown = TABLET_CONFIG.SUCCESS_TIMEOUT;
+  document.getElementById('success-countdown').textContent = `Returning in ${countdown} seconds...`;
+
+  showScreen('success');
+
+  if (successTimer) clearInterval(successTimer);
+  successTimer = setInterval(() => {
+    countdown--;
+    document.getElementById('success-countdown').textContent = `Returning in ${countdown} seconds...`;
+    if (countdown <= 0) {
+      clearInterval(successTimer);
+      showScreen('home');
+      renderEmployees(APP.employees);
+    }
+  }, 1000);
+}
+
+function formatShiftInfo(emp, action, now) {
+  if (action === 'CLOCK_OUT' && emp.clockInTime) {
+    const ms   = now - emp.clockInTime;
+    const hrs  = Math.floor(ms / 3600000);
+    const mins = Math.floor((ms % 3600000) / 60000);
+    const inStr = emp.clockInTime.toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:true});
+    return `${inStr} → Total: ${hrs}h ${mins}m`;
+  }
+  return now.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric', year:'numeric'});
+}
+
+// ─── Admin Panel ───
+document.getElementById('admin-fab').onclick = () => {
+  if (APP.adminLoggedIn) { showAdminPanel(); }
+  else { showScreen('admin-login'); }
+};
+
+function adminLogin() {
+  const pwd = document.getElementById('admin-pass-input').value;
+  const correctPwd = TABLET_CONFIG.ADMIN_PASSWORDS[APP.location] || 'admin1234';
+  if (pwd === correctPwd) {
+    APP.adminLoggedIn = true;
+    document.getElementById('admin-pass-input').value = '';
+    document.getElementById('admin-login-error').style.display = 'none';
+    showAdminPanel();
+  } else {
+    showError('admin-login-error', 'Incorrect password.');
+  }
+}
+function adminLogout() {
+  APP.adminLoggedIn = false;
+  showScreen('home');
+}
+function showAdminPanel() {
+  document.getElementById('admin-location-val').textContent = APP.location;
+  document.getElementById('admin-url-val').textContent      = APP.scriptUrl;
+  document.getElementById('admin-emp-count').textContent    = APP.employees.length;
+  document.getElementById('admin-last-sync').textContent    = APP.lastSync ? APP.lastSync.toLocaleTimeString() : '—';
+  renderPinTable();
+  showScreen('admin');
+  switchAdminTab('pins');
+}
+
+function renderPinTable() {
+  const tbody = document.getElementById('pin-table-body');
+  if (!APP.employees.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-light);padding:28px">No employees loaded.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = APP.employees.map(emp => `
+    <tr>
+      <td><code style="font-size:12px">${emp.id}</code></td>
+      <td><strong>${emp.name}</strong></td>
+      <td style="color:var(--text-light)">${emp.nickname || '—'}</td>
+      <td>${emp.position || '—'}</td>
+      <td>
+        <div class="pin-input-cell">
+          <input type="text" id="pin-field-${emp.id}" value="${emp.pin || ''}"
+            maxlength="4" pattern="[0-9]{4}" placeholder="----"
+            oninput="this.value=this.value.replace(/[^0-9]/g,'')" />
+        </div>
+      </td>
+      <td>
+        <button class="btn-save-pin" onclick="savePin('${emp.id}')">Save</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function savePin(empId) {
+  const input = document.getElementById('pin-field-' + empId);
+  const pin   = input.value.trim();
+  if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+    showToast('PIN must be exactly 4 digits');
+    return;
+  }
+  const emp = APP.employees.find(e => e.id === empId);
+  if (!emp) return;
+  emp.pin = pin;
+
+  try {
+    const res = await fetch(APP.scriptUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'updatePin', employeeId: empId, pin })
+    });
+    const data = await res.json();
+    if (data.success) showToast(`✓ PIN saved for ${emp.name}`);
+    else showToast('⚠ Saved locally — check connection');
+  } catch {
+    showToast('⚠ Saved locally — check connection');
+  }
+}
+
+function switchAdminTab(tab) {
+  document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('admin-tab-pins').style.display = 'none';
+  document.getElementById('admin-tab-log').style.display  = 'none';
+  document.getElementById('admin-tab-settings').style.display = 'none';
+
+  const idx = ['pins','log','settings'].indexOf(tab);
+  document.querySelectorAll('.admin-tab-btn')[idx].classList.add('active');
+  document.getElementById('admin-tab-' + tab).style.display = 'block';
+
+  if (tab === 'log') loadTodayLog();
+}
+
+async function loadTodayLog() {
+  const tbody = document.getElementById('log-table-body');
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:28px"><div class="spinner" style="margin:0 auto"></div></td></tr>`;
+  try {
+    const res  = await fetch(`${APP.scriptUrl}?action=getLog&location=${encodeURIComponent(APP.location)}&date=${todayStr()}`);
+    const data = await res.json();
+    if (!data.log || data.log.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-light);padding:28px">No entries for today yet.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.log.map(r => {
+      const badge = r.status === 'in' ? 'badge-in' : r.status === 'break' ? 'badge-break' : 'badge-out';
+      const statusText = r.status === 'in' ? 'Clocked In' : r.status === 'break' ? 'On Break' : 'Clocked Out';
+      return `<tr>
+        <td><strong>${r.name}</strong></td>
+        <td>${r.clockIn || '—'}</td>
+        <td>${r.breakStart || '—'}</td>
+        <td>${r.breakEnd || '—'}</td>
+        <td>${r.clockOut || '—'}</td>
+        <td>${r.totalHours || '—'}</td>
+        <td><span class="badge ${badge}">${statusText}</span></td>
+      </tr>`;
+    }).join('');
+  } catch {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:28px">Could not load log — check connection.</td></tr>`;
+  }
+}
+
+function resetTablet() {
+  if (!confirm('Reset this tablet? You will need to set it up again.')) return;
+  localStorage.removeItem('yama_location');
+  localStorage.removeItem('yama_script_url');
+  location.reload();
+}
+
+// ─── Utilities ───
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ─── Boot ───
+init();
+</script>
+</body>
+</html>
