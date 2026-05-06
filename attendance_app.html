@@ -292,12 +292,12 @@
   .emp-card.no-pin:hover { transform: none; border-color: transparent; }
 
   /* ── PIN SCREEN ── */
-  #screen-pin {
+  #screen-pin, #screen-action {
     min-height: calc(100vh - 68px);
     display: flex; align-items: center; justify-content: center;
     padding: 30px 20px;
   }
-  #screen-pin.active { display: flex; }
+  #screen-pin.active, #screen-action.active { display: flex; }
   .pin-card {
     background: var(--white);
     border-radius: var(--radius);
@@ -685,7 +685,7 @@ const TABLET_CONFIG = {
   LOCATION: "",  // Leave blank for setup screen on first launch
 
   // Your deployed Google Apps Script Web App URL
-  APPS_SCRIPT_URL: "YOUR_APPS_SCRIPT_URL_HERE",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxPwHFfXYuKTyoUYHfbfBH2YBQLxOtg6Ip-CBLP5e6lyM8K04UoBuhb5uKQOTyXdyCLXA/exec",
 
   // Admin passwords per location
   ADMIN_PASSWORDS: {
@@ -779,26 +779,7 @@ const TABLET_CONFIG = {
     <div class="pin-employee-avatar" id="pin-avatar">?</div>
     <h3 id="pin-name">Employee Name</h3>
     <div class="pin-position" id="pin-position">Position</div>
-
-    <!-- Action selector -->
-    <div class="action-tabs" id="action-tabs">
-      <div class="action-tab" id="tab-clockin" onclick="selectAction('CLOCK_IN')">
-        <div class="tab-icon">🟢</div>
-        <div>Clock In</div>
-      </div>
-      <div class="action-tab" id="tab-clockout" onclick="selectAction('CLOCK_OUT')">
-        <div class="tab-icon">🔴</div>
-        <div>Clock Out</div>
-      </div>
-      <div class="action-tab" id="tab-breakstart" onclick="selectAction('BREAK_START')">
-        <div class="tab-icon">☕</div>
-        <div>Start Break</div>
-      </div>
-      <div class="action-tab" id="tab-breakend" onclick="selectAction('BREAK_END')">
-        <div class="tab-icon">▶️</div>
-        <div>End Break</div>
-      </div>
-    </div>
+    <p style="font-size:13px;color:var(--text-light);margin-bottom:8px">Enter your 4-digit PIN</p>
 
     <div class="pin-error" id="pin-error">Incorrect PIN. Please try again.</div>
 
@@ -827,6 +808,37 @@ const TABLET_CONFIG = {
     </div>
 
     <button class="btn btn-outline btn-full" onclick="showScreen('home')">← Back</button>
+  </div>
+</div>
+
+<!-- ACTION SCREEN -->
+<div id="screen-action" class="screen">
+  <div class="pin-card" style="max-width:460px">
+    <div class="pin-employee-avatar" id="action-avatar">?</div>
+    <h3 id="action-name">Employee Name</h3>
+    <div class="pin-position" id="action-position">Position</div>
+    <p style="font-size:13px;color:var(--text-light);margin:10px 0 20px">What would you like to do?</p>
+
+    <div class="action-tabs" id="action-tabs">
+      <div class="action-tab" id="tab-clockin" onclick="selectAction('CLOCK_IN')">
+        <div class="tab-icon">🟢</div>
+        <div>Clock In</div>
+      </div>
+      <div class="action-tab" id="tab-clockout" onclick="selectAction('CLOCK_OUT')">
+        <div class="tab-icon">🔴</div>
+        <div>Clock Out</div>
+      </div>
+      <div class="action-tab" id="tab-breakstart" onclick="selectAction('BREAK_START')">
+        <div class="tab-icon">☕</div>
+        <div>Start Break</div>
+      </div>
+      <div class="action-tab" id="tab-breakend" onclick="selectAction('BREAK_END')">
+        <div class="tab-icon">▶️</div>
+        <div>End Break</div>
+      </div>
+    </div>
+
+    <button class="btn btn-outline btn-full" style="margin-top:16px" onclick="showScreen('home')">← Back</button>
   </div>
 </div>
 
@@ -1135,7 +1147,6 @@ function selectEmployee(empId) {
   document.getElementById('pin-error').style.display = 'none';
 
   updatePinDots();
-  updateActionTabs(emp);
   showScreen('pin');
 }
 
@@ -1150,10 +1161,12 @@ function updateActionTabs(emp) {
   setTabState('tab-breakstart', isIn,    'BREAK_START');
   setTabState('tab-breakend',   isBreak, 'BREAK_END');
 
-  // Auto-select the most logical action
-  if (isOut)   selectAction('CLOCK_IN');
-  else if (isBreak) selectAction('BREAK_END');
-  else if (isIn)    selectAction('CLOCK_OUT');
+  // Pre-highlight the most logical action (visual only, no auto-submit)
+  const map = { CLOCK_IN:'tab-clockin', CLOCK_OUT:'tab-clockout', BREAK_START:'tab-breakstart', BREAK_END:'tab-breakend' };
+  const defaultAction = isOut ? 'CLOCK_IN' : isBreak ? 'BREAK_END' : 'CLOCK_OUT';
+  document.querySelectorAll('.action-tab').forEach(t => t.classList.remove('selected'));
+  const el = document.getElementById(map[defaultAction]);
+  if (el && !el.classList.contains('disabled')) el.classList.add('selected');
 }
 
 function setTabState(tabId, enabled, action) {
@@ -1170,13 +1183,13 @@ function setTabState(tabId, enabled, action) {
 
 function selectAction(action) {
   APP.selectedAction = action;
+  // Highlight briefly then submit
   document.querySelectorAll('.action-tab').forEach(t => t.classList.remove('selected'));
   const map = { CLOCK_IN:'tab-clockin', CLOCK_OUT:'tab-clockout', BREAK_START:'tab-breakstart', BREAK_END:'tab-breakend' };
   const el = document.getElementById(map[action]);
   if (el && !el.classList.contains('disabled')) el.classList.add('selected');
-  APP.pinEntry = '';
-  updatePinDots();
-  document.getElementById('pin-error').style.display = 'none';
+  // Short delay so user sees the selection, then submit
+  setTimeout(() => submitAttendance(), 250);
 }
 
 // ─── Numpad ───
@@ -1196,20 +1209,27 @@ function updatePinDots() {
   }
 }
 function numConfirm() {
-  if (!APP.selectedAction) { showToast('Please select an action first'); return; }
   if (APP.pinEntry.length < 4) { showToast('Enter your 4-digit PIN'); return; }
   if (APP.pinEntry !== APP.selectedEmployee.pin) {
     document.getElementById('pin-error').style.display = 'block';
     APP.pinEntry = '';
     updatePinDots();
-    // Shake animation
     const card = document.querySelector('.pin-card');
     card.style.animation = 'none';
     setTimeout(() => { card.style.animation = ''; }, 10);
     return;
   }
   document.getElementById('pin-error').style.display = 'none';
-  submitAttendance();
+  // PIN verified — now show action selection screen
+  showActionScreen(APP.selectedEmployee);
+}
+
+function showActionScreen(emp) {
+  document.getElementById('action-avatar').textContent = getInitials(emp.name);
+  document.getElementById('action-name').textContent = emp.name;
+  document.getElementById('action-position').textContent = emp.position || '';
+  updateActionTabs(emp);
+  showScreen('action');
 }
 
 // ─── Submit attendance event ───
