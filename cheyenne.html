@@ -291,13 +291,22 @@
   .emp-card.no-pin { opacity: 0.5; cursor: not-allowed; }
   .emp-card.no-pin:hover { transform: none; border-color: transparent; }
 
-  /* ── PIN SCREEN ── */
-  #screen-pin, #screen-action {
-    min-height: calc(100vh - 68px);
-    display: flex; align-items: center; justify-content: center;
-    padding: 30px 20px;
+  /* ── MODAL OVERLAY (PIN + ACTION) ── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(42,21,6,0.55);
+    backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.18s ease;
   }
-  #screen-pin.active, #screen-action.active { display: flex; }
+  .modal-overlay.active { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-overlay .pin-card {
+    animation: slideUp 0.22s ease;
+  }
   .pin-card {
     background: var(--white);
     border-radius: var(--radius);
@@ -407,13 +416,7 @@
     display: none;
   }
 
-  /* ── SUCCESS SCREEN ── */
-  #screen-success {
-    min-height: calc(100vh - 68px);
-    display: flex; align-items: center; justify-content: center;
-    padding: 30px 20px;
-  }
-  #screen-success.active { display: flex; }
+  /* success screen uses .modal-overlay */
   .success-card {
     background: var(--white);
     border-radius: var(--radius);
@@ -764,7 +767,7 @@ const TABLET_CONFIG = {
 </div>
 
 <!-- PIN SCREEN -->
-<div id="screen-pin" class="screen">
+<div id="screen-pin" class="modal-overlay">
   <div class="pin-card">
     <div class="pin-employee-avatar" id="pin-avatar">?</div>
     <h3 id="pin-name">Employee Name</h3>
@@ -797,12 +800,12 @@ const TABLET_CONFIG = {
       <button class="num-btn confirm" onclick="numConfirm()">OK</button>
     </div>
 
-    <button class="btn btn-outline btn-full" onclick="showScreen('home')">← Back</button>
+    <button class="btn btn-outline btn-full" onclick="closeModal()">← Cancel</button>
   </div>
 </div>
 
 <!-- ACTION SCREEN -->
-<div id="screen-action" class="screen">
+<div id="screen-action" class="modal-overlay">
   <div class="pin-card" style="max-width:460px">
     <div class="pin-employee-avatar" id="action-avatar">?</div>
     <h3 id="action-name">Employee Name</h3>
@@ -828,12 +831,12 @@ const TABLET_CONFIG = {
       </div>
     </div>
 
-    <button class="btn btn-outline btn-full" style="margin-top:16px" onclick="showScreen('home')">← Back</button>
+    <button class="btn btn-outline btn-full" style="margin-top:16px" onclick="closeModal()">← Cancel</button>
   </div>
 </div>
 
 <!-- SUCCESS SCREEN -->
-<div id="screen-success" class="screen">
+<div id="screen-success" class="modal-overlay">
   <div class="success-card">
     <div class="success-icon-wrap" id="success-icon-wrap">✅</div>
     <h3 id="success-title">Clocked In!</h3>
@@ -982,8 +985,21 @@ updateClock();
 
 // ─── Screen management ───
 function showScreen(name) {
+  // Close any open modals first
+  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+  // If targeting a modal, just open it (keep home screen visible behind)
+  const modalIds = ['pin', 'action'];
+  if (modalIds.includes(name)) {
+    document.getElementById('screen-' + name).classList.add('active');
+    return;
+  }
+  // Otherwise switch full screens
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
+}
+
+function closeModal() {
+  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
 }
 
 // ─── Init ───
@@ -1287,6 +1303,7 @@ function showSuccessScreen(emp, action, now) {
     document.getElementById('success-countdown').textContent = `Returning in ${countdown} seconds...`;
     if (countdown <= 0) {
       clearInterval(successTimer);
+      closeModal();
       showScreen('home');
       renderEmployees(APP.employees);
     }
