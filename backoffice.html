@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Back Office — Yama Restaurant Group</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --brown-dark:   #2A1506;
+    --brown-mid:    #3D1E0A;
+    --brown-warm:   #5C2E0E;
+    --brown-light:  #7A3F18;
+    --gold:         #C8922A;
+    --gold-light:   #E4B860;
+    --gold-pale:    #F5DFA0;
+    --cream:        #F5EFE6;
+    --cream-dark:   #EDE4D6;
+    --cream-mid:    #E8DDD0;
+    --text-dark:    #1A0A02;
+    --text-mid:     #4A2E18;
+    --text-light:   #8A6A50;
+    --white:        #FFFFFF;
+    --success:      #4A7C59;
+    --success-bg:   #D4EDDA;
+    --danger:       #8B2E2E;
+    --danger-bg:    #FADBD8;
+    --warning:      #8B6914;
+    --warning-bg:   #FEF3CD;
+    --shadow:       0 4px 24px rgba(42,21,6,0.12);
+    --shadow-sm:    0 2px 10px rgba(42,21,6,0.08);
+    --radius:       12px;
+    --radius-sm:    8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text-dark);
+    min-height: 100vh;
+  }
+
+  /* ── TOPBAR ── */
+  #topbar {
+    background: var(--brown-dark);
+    padding: 0 32px;
+    height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.3);
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-icon {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .brand-text h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px; font-weight: 700;
+    color: var(--gold-light); line-height: 1.1;
+  }
+  .brand-text p {
+    font-size: 10px; color: rgba(245,223,160,0.6);
+    letter-spacing: 1.5px; text-transform: uppercase;
+  }
+  #logout-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.7);
+    padding: 8px 16px; border-radius: var(--radius-sm);
+    font-size: 13px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.18s;
+  }
+  #logout-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+  /* ── LOGIN SCREEN ── */
+  #login-screen {
+    min-height: calc(100vh - 64px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 40px 20px;
+  }
+  .login-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 48px 44px;
+    max-width: 420px; width: 100%;
+    box-shadow: var(--shadow);
+    text-align: center;
+  }
+  .login-card .login-icon { font-size: 48px; margin-bottom: 20px; }
+  .login-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px; color: var(--brown-dark); margin-bottom: 8px;
+  }
+  .login-card p { color: var(--text-light); font-size: 14px; margin-bottom: 28px; }
+  .form-group { margin-bottom: 14px; text-align: left; }
+  .form-group label {
+    display: block; font-size: 11px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text-light); margin-bottom: 6px;
+  }
+  .form-group input, .form-group select {
+    width: 100%; padding: 13px 14px;
+    border: 1.5px solid var(--cream-mid);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; color: var(--text-dark);
+    background: var(--cream); outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--gold); }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px 24px; border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 0.3px; cursor: pointer; border: none;
+    transition: all 0.18s; text-transform: uppercase;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--brown-warm), var(--brown-light));
+    color: var(--gold-pale);
+    box-shadow: 0 4px 14px rgba(92,46,14,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(92,46,14,0.4); }
+  .btn-gold {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--brown-dark);
+  }
+  .btn-gold:hover { transform: translateY(-1px); }
+  .btn-outline {
+    background: var(--white); border: 1.5px solid var(--cream-mid);
+    color: var(--text-mid);
+  }
+  .btn-outline:hover { background: var(--cream); }
+  .btn-full { width: 100%; }
+  .btn-sm { padding: 8px 14px; font-size: 12px; }
+
+  .error-msg {
+    background: var(--danger-bg); color: var(--danger);
+    border-radius: var(--radius-sm); padding: 10px 14px;
+    font-size: 13px; margin-bottom: 14px; display: none;
+  }
+
+  /* ── DASHBOARD ── */
+  #dashboard { display: none; padding: 32px; max-width: 1400px; margin: 0 auto; }
+
+  .dash-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+  }
+  .dash-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px; color: var(--brown-dark);
+  }
+  .dash-header p { font-size: 13px; color: var(--text-light); margin-top: 2px; }
+
+  /* ── FILTER PANEL ── */
+  .filter-panel {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 24px;
+  }
+  .filter-panel h3 {
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text-light); margin-bottom: 18px;
+  }
+  .filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px; align-items: end;
+  }
+  .filter-actions {
+    display: flex; gap: 10px; align-items: center;
+    margin-top: 20px; flex-wrap: wrap;
+  }
+
+  /* ── SUMMARY CARDS ── */
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px; margin-bottom: 24px;
+  }
+  .summary-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    box-shadow: var(--shadow-sm);
+    border-left: 4px solid var(--gold);
+  }
+  .summary-card .s-label {
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text-light); margin-bottom: 8px;
+  }
+  .summary-card .s-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px; font-weight: 700;
+    color: var(--brown-dark);
+  }
+  .summary-card .s-sub {
+    font-size: 12px; color: var(--text-light); margin-top: 2px;
+  }
+  .summary-card.green { border-left-color: var(--success); }
+  .summary-card.orange { border-left-color: var(--warning); }
+  .summary-card.red { border-left-color: var(--danger); }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .table-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--cream-mid);
+    flex-wrap: wrap; gap: 10px;
+  }
+  .table-toolbar .result-count {
+    font-size: 13px; color: var(--text-light);
+  }
+  .table-toolbar .result-count strong { color: var(--text-dark); }
+  .table-scroll { overflow-x: auto; }
+  table {
+    width: 100%; border-collapse: collapse; min-width: 700px;
+  }
+  thead th {
+    background: var(--brown-dark);
+    color: var(--gold-pale);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 13px 16px; text-align: left;
+    white-space: nowrap; cursor: pointer;
+    user-select: none;
+  }
+  thead th:hover { background: var(--brown-mid); }
+  thead th .sort-icon { margin-left: 4px; opacity: 0.5; }
+  thead th.sorted .sort-icon { opacity: 1; }
+
+  tbody tr { border-bottom: 1px solid var(--cream-mid); transition: background 0.12s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--cream); }
+  tbody td {
+    padding: 12px 16px; font-size: 13px;
+    color: var(--text-dark); white-space: nowrap;
+  }
+  tbody td.time { font-family: 'DM Mono', monospace; font-size: 12px; }
+  tbody td.hours { font-weight: 600; color: var(--brown-warm); }
+
+  .badge {
+    display: inline-block; padding: 3px 9px;
+    border-radius: 10px; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .badge-in  { background: var(--success-bg); color: var(--success); }
+  .badge-break { background: var(--warning-bg); color: var(--warning); }
+  .badge-out { background: var(--cream-mid); color: var(--text-light); }
+
+  .location-chip {
+    display: inline-block; padding: 3px 9px;
+    border-radius: 10px; font-size: 10px; font-weight: 600;
+    background: rgba(200,146,42,0.12); color: var(--gold);
+    letter-spacing: 0.3px;
+  }
+
+  /* empty state */
+  .empty-state {
+    text-align: center; padding: 60px 20px;
+    color: var(--text-light);
+  }
+  .empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* loading */
+  .loading-state {
+    text-align: center; padding: 60px 20px;
+  }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--cream-mid);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* pagination */
+  .pagination {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; padding: 16px;
+    border-top: 1px solid var(--cream-mid);
+  }
+  .page-btn {
+    width: 36px; height: 36px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--cream-mid);
+    background: var(--white); color: var(--text-mid);
+    font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .page-btn:hover { border-color: var(--gold); color: var(--brown-warm); }
+  .page-btn.active {
+    background: var(--brown-dark); color: var(--gold-pale);
+    border-color: var(--brown-dark);
+  }
+  .page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .page-info { font-size: 13px; color: var(--text-light); padding: 0 8px; }
+
+  @media (max-width: 768px) {
+    #dashboard { padding: 20px 16px; }
+    .filter-grid { grid-template-columns: 1fr 1fr; }
+    .summary-cards { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<script>
+const SCRIPT_URL   = "https://script.google.com/macros/s/AKfycbz-XH26cvelfukIDN9e7zwWTQ8kY6ANO8-ad7lXFsG6IQedlb1HHCeG1alNq0WB6HRopw/exec";
+const ADMIN_PASSWORD = "admin1234"; // Change this to your back office password
+
+const LOCATIONS = [
+  "Yama Spring Mountain",
+  "Yama Flamingo",
+  "Yama Cheyenne",
+  "Yama Fremont",
+  "Kimchi"
+];
+
+let allRows     = [];
+let filtered    = [];
+let currentPage = 1;
+const PAGE_SIZE = 50;
+let sortCol     = 'date';
+let sortDir     = 'desc';
+</script>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div class="brand">
+    <div class="brand-icon">🍣</div>
+    <div class="brand-text">
+      <h1>Yama Restaurant Group</h1>
+      <p>Back Office Dashboard</p>
+    </div>
+  </div>
+  <button id="logout-btn" onclick="logout()" style="display:none">⎋ Logout</button>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-icon">📊</div>
+    <h2>Back Office</h2>
+    <p>Sign in to view attendance reports across all locations</p>
+    <div class="error-msg" id="login-error">Incorrect password.</div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="Enter back office password"
+        onkeydown="if(event.key==='Enter') doLogin()" />
+    </div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()" style="margin-top:8px">
+      → &nbsp; Sign In
+    </button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="dash-header">
+    <div>
+      <h2>Attendance Report</h2>
+      <p id="dash-subtitle">Yama Restaurant Group · All Locations</p>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="btn btn-gold btn-sm" onclick="runReport()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-panel">
+    <h3>🔍 Filters</h3>
+    <div class="filter-grid">
+      <div class="form-group" style="margin:0">
+        <label>Date From</label>
+        <input type="date" id="f-date-from" />
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Date To</label>
+        <input type="date" id="f-date-to" />
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Location</label>
+        <select id="f-location">
+          <option value="ALL">All Locations</option>
+          <option>Yama Spring Mountain</option>
+          <option>Yama Flamingo</option>
+          <option>Yama Cheyenne</option>
+          <option>Yama Fremont</option>
+          <option>Kimchi</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Employee Name</label>
+        <input type="text" id="f-employee" placeholder="Search name..." oninput="applyFilters()" />
+      </div>
+    </div>
+    <div class="filter-actions">
+      <button class="btn btn-primary" onclick="runReport()">Search</button>
+      <button class="btn btn-outline" onclick="resetFilters()">Clear Filters</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn btn-outline btn-sm" onclick="setQuick('today')">Today</button>
+        <button class="btn btn-outline btn-sm" onclick="setQuick('week')">This Week</button>
+        <button class="btn btn-outline btn-sm" onclick="setQuick('month')">This Month</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-cards" id="summary-cards">
+    <div class="summary-card">
+      <div class="s-label">Total Shifts</div>
+      <div class="s-value" id="s-total">—</div>
+      <div class="s-sub">in selected range</div>
+    </div>
+    <div class="summary-card green">
+      <div class="s-label">Completed</div>
+      <div class="s-value" id="s-completed">—</div>
+      <div class="s-sub">clocked out</div>
+    </div>
+    <div class="summary-card orange">
+      <div class="s-label">Active / Break</div>
+      <div class="s-value" id="s-active">—</div>
+      <div class="s-sub">currently working</div>
+    </div>
+    <div class="summary-card red">
+      <div class="s-label">Incomplete</div>
+      <div class="s-value" id="s-incomplete">—</div>
+      <div class="s-sub">no clock-out</div>
+    </div>
+    <div class="summary-card">
+      <div class="s-label">Avg Hours</div>
+      <div class="s-value" id="s-avg">—</div>
+      <div class="s-sub">per completed shift</div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <div class="table-toolbar">
+      <div class="result-count" id="result-count">Run a search to load data</div>
+      <div style="font-size:12px;color:var(--text-light)" id="page-info-top"></div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('date')">Date <span class="sort-icon">↕</span></th>
+            <th onclick="sortBy('location')">Location <span class="sort-icon">↕</span></th>
+            <th onclick="sortBy('name')">Employee <span class="sort-icon">↕</span></th>
+            <th>Clock In</th>
+            <th>Break Start</th>
+            <th>Break End</th>
+            <th>Clock Out</th>
+            <th onclick="sortBy('totalHours')">Total Hours <span class="sort-icon">↕</span></th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr><td colspan="9">
+            <div class="empty-state">
+              <div class="empty-icon">📋</div>
+              <p>Use the filters above and click <strong>Search</strong> to load attendance data</p>
+            </div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+// ── Auth ──
+function doLogin() {
+  const pwd = document.getElementById('login-pass').value;
+  if (pwd === ADMIN_PASSWORD) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display    = 'block';
+    document.getElementById('logout-btn').style.display   = 'block';
+    document.getElementById('login-error').style.display  = 'none';
+    setQuick('today');
+    runReport();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('login-pass').value = '';
+  }
+}
+function logout() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('dashboard').style.display    = 'none';
+  document.getElementById('logout-btn').style.display   = 'none';
+  document.getElementById('login-pass').value           = '';
+}
+
+// ── Quick date presets ──
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+function setQuick(preset) {
+  const today = new Date();
+  const fmt   = d => d.toISOString().slice(0, 10);
+  if (preset === 'today') {
+    document.getElementById('f-date-from').value = fmt(today);
+    document.getElementById('f-date-to').value   = fmt(today);
+  } else if (preset === 'week') {
+    const mon = new Date(today);
+    mon.setDate(today.getDate() - today.getDay() + 1);
+    document.getElementById('f-date-from').value = fmt(mon);
+    document.getElementById('f-date-to').value   = fmt(today);
+  } else if (preset === 'month') {
+    const first = new Date(today.getFullYear(), today.getMonth(), 1);
+    document.getElementById('f-date-from').value = fmt(first);
+    document.getElementById('f-date-to').value   = fmt(today);
+  }
+}
+
+function resetFilters() {
+  document.getElementById('f-location').value  = 'ALL';
+  document.getElementById('f-employee').value  = '';
+  setQuick('today');
+}
+
+// ── Fetch report ──
+async function runReport() {
+  const dateFrom = document.getElementById('f-date-from').value || todayStr();
+  const dateTo   = document.getElementById('f-date-to').value   || todayStr();
+  const location = document.getElementById('f-location').value;
+  const employee = document.getElementById('f-employee').value.trim();
+
+  showLoading();
+
+  try {
+    const params = new URLSearchParams({
+      action:   'getReport',
+      dateFrom, dateTo,
+      location: location || 'ALL',
+      employee: employee || ''
+    });
+    const res  = await fetch(`${SCRIPT_URL}?${params}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    allRows     = data.rows || [];
+    currentPage = 1;
+    applyFilters();
+
+    document.getElementById('dash-subtitle').textContent =
+      `${location === 'ALL' ? 'All Locations' : location} · ${dateFrom} to ${dateTo}`;
+  } catch (err) {
+    showError('Failed to load data: ' + err.message);
+  }
+}
+
+// ── Client-side filter (employee name search is real-time) ──
+function applyFilters() {
+  const empFilter = document.getElementById('f-employee').value.toLowerCase();
+  filtered = allRows.filter(r =>
+    !empFilter || r.name.toLowerCase().includes(empFilter)
+  );
+  sortRows();
+  updateSummary();
+  renderTable();
+}
+
+// ── Sort ──
+function sortBy(col) {
+  if (sortCol === col) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  else { sortCol = col; sortDir = 'asc'; }
+  document.querySelectorAll('thead th').forEach(th => th.classList.remove('sorted'));
+  sortRows();
+  renderTable();
+}
+function sortRows() {
+  filtered.sort((a, b) => {
+    let va = a[sortCol] || '', vb = b[sortCol] || '';
+    if (sortCol === 'totalHours') {
+      va = parseHours(va); vb = parseHours(vb);
+      return sortDir === 'asc' ? va - vb : vb - va;
+    }
+    return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+}
+function parseHours(str) {
+  const m = str.match(/(\d+)h\s*(\d+)m/);
+  return m ? parseInt(m[1]) * 60 + parseInt(m[2]) : 0;
+}
+
+// ── Summary cards ──
+function updateSummary() {
+  const total      = filtered.length;
+  const completed  = filtered.filter(r => r.clockOut && r.clockOut !== '—' && r.clockOut !== '').length;
+  const active     = filtered.filter(r => r.status === 'In' || r.status === 'Break').length;
+  const incomplete = filtered.filter(r => (!r.clockOut || r.clockOut === '' || r.clockOut === '—') && r.clockIn && r.clockIn !== '').length;
+
+  // Avg hours of completed shifts
+  const completedRows = filtered.filter(r => r.totalHours && r.totalHours !== '—' && r.totalHours !== '');
+  let avgMins = 0;
+  if (completedRows.length > 0) {
+    const totalMins = completedRows.reduce((sum, r) => sum + parseHours(r.totalHours), 0);
+    avgMins = Math.round(totalMins / completedRows.length);
+  }
+  const avgStr = completedRows.length > 0
+    ? `${Math.floor(avgMins/60)}h ${avgMins%60}m`
+    : '—';
+
+  document.getElementById('s-total').textContent      = total;
+  document.getElementById('s-completed').textContent  = completed;
+  document.getElementById('s-active').textContent     = active;
+  document.getElementById('s-incomplete').textContent = incomplete;
+  document.getElementById('s-avg').textContent        = avgStr;
+}
+
+// ── Render table ──
+function renderTable() {
+  const tbody     = document.getElementById('table-body');
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  if (currentPage > totalPages) currentPage = 1;
+
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page  = filtered.slice(start, start + PAGE_SIZE);
+
+  document.getElementById('result-count').innerHTML =
+    `Showing <strong>${filtered.length}</strong> record${filtered.length !== 1 ? 's' : ''}`;
+  document.getElementById('page-info-top').textContent =
+    totalPages > 1 ? `Page ${currentPage} of ${totalPages}` : '';
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <p>No records found for the selected filters.</p>
+    </div></td></tr>`;
+    document.getElementById('pagination').style.display = 'none';
+    return;
+  }
+
+  tbody.innerHTML = page.map(r => {
+    const statusClass = r.status === 'In' ? 'badge-in' : r.status === 'Break' ? 'badge-break' : 'badge-out';
+    const statusText  = r.status === 'In' ? 'Active' : r.status === 'Break' ? 'On Break' : r.status === 'Out' ? 'Completed' : r.status || '—';
+    return `<tr>
+      <td>${formatDisplayDate(r.date)}</td>
+      <td><span class="location-chip">${r.location}</span></td>
+      <td><strong>${r.name}</strong><br><span style="font-size:11px;color:var(--text-light)">${r.id}</span></td>
+      <td class="time">${r.clockIn  || '—'}</td>
+      <td class="time">${r.breakStart || '—'}</td>
+      <td class="time">${r.breakEnd   || '—'}</td>
+      <td class="time">${r.clockOut   || '—'}</td>
+      <td class="hours">${r.totalHours || '—'}</td>
+      <td><span class="badge ${statusClass}">${statusText}</span></td>
+    </tr>`;
+  }).join('');
+
+  renderPagination(totalPages);
+}
+
+function formatDisplayDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+}
+
+function renderPagination(totalPages) {
+  const pag = document.getElementById('pagination');
+  if (totalPages <= 1) { pag.style.display = 'none'; return; }
+  pag.style.display = 'flex';
+
+  let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 2) {
+      html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    } else if (Math.abs(i - currentPage) === 3) {
+      html += `<span class="page-info">…</span>`;
+    }
+  }
+  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
+  pag.innerHTML = html;
+}
+
+function goPage(p) {
+  currentPage = p;
+  renderTable();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Loading / error states ──
+function showLoading() {
+  document.getElementById('table-body').innerHTML = `<tr><td colspan="9">
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <div style="color:var(--text-light);font-size:14px">Loading attendance data...</div>
+    </div>
+  </td></tr>`;
+  document.getElementById('result-count').textContent = 'Loading...';
+  document.getElementById('pagination').style.display = 'none';
+}
+function showError(msg) {
+  document.getElementById('table-body').innerHTML = `<tr><td colspan="9">
+    <div class="empty-state">
+      <div class="empty-icon">⚠️</div>
+      <p style="color:var(--danger)">${msg}</p>
+    </div>
+  </td></tr>`;
+  document.getElementById('result-count').textContent = 'Error loading data';
+}
+
+// ── Export CSV ──
+function exportCSV() {
+  if (!filtered.length) { alert('No data to export.'); return; }
+  const headers = ['Date','Location','Employee ID','Employee Name','Clock In','Break Start','Break End','Clock Out','Total Hours','Status'];
+  const rows    = filtered.map(r => [
+    r.date, r.location, r.id, r.name,
+    r.clockIn, r.breakStart, r.breakEnd, r.clockOut, r.totalHours, r.status
+  ].map(v => `"${(v||'').replace(/"/g,'""')}"`).join(','));
+
+  const csv  = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `attendance_${document.getElementById('f-date-from').value}_to_${document.getElementById('f-date-to').value}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
