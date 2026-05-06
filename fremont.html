@@ -988,20 +988,23 @@ function showScreen(name) {
 
 // ─── Init ───
 function init() {
+  // If location is hardcoded in config, always use it — skip setup screen entirely
+  if (TABLET_CONFIG.LOCATION) {
+    APP.location  = TABLET_CONFIG.LOCATION;
+    APP.scriptUrl = TABLET_CONFIG.APPS_SCRIPT_URL;
+    document.getElementById('location-badge').textContent = APP.location;
+    showScreen('home');
+    refreshEmployees();
+    setInterval(refreshEmployees, TABLET_CONFIG.REFRESH_INTERVAL);
+    return;
+  }
+  // Fallback: check localStorage
   const savedLocation = localStorage.getItem('yama_location');
   const savedUrl      = localStorage.getItem('yama_script_url');
-
   if (savedLocation && savedUrl) {
     APP.location  = savedLocation;
     APP.scriptUrl = savedUrl;
     document.getElementById('location-badge').textContent = savedLocation;
-    showScreen('home');
-    refreshEmployees();
-    setInterval(refreshEmployees, TABLET_CONFIG.REFRESH_INTERVAL);
-  } else if (TABLET_CONFIG.LOCATION && TABLET_CONFIG.APPS_SCRIPT_URL !== "YOUR_APPS_SCRIPT_URL_HERE") {
-    APP.location  = TABLET_CONFIG.LOCATION;
-    APP.scriptUrl = TABLET_CONFIG.APPS_SCRIPT_URL;
-    document.getElementById('location-badge').textContent = APP.location;
     showScreen('home');
     refreshEmployees();
     setInterval(refreshEmployees, TABLET_CONFIG.REFRESH_INTERVAL);
