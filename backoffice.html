@@ -329,7 +329,7 @@
 <body>
 
 <script>
-const SCRIPT_URL   = "https://script.google.com/macros/s/AKfycbwM1vrHSW8rd3P1cHzcVpZgUCi97_ijoRkXvMrdOi2Pz7-D-O7RzR2kuFQUpSQvTmJI/exec";
+const SCRIPT_URL   = "https://script.google.com/macros/s/AKfycbwqAh52mtmPpPahWz7wxcmeKrIGF_eRfHRwaiQUqlLpgKo3ipNjaatXwI9tN-PhXeDyEw/exec";
 const ADMIN_PASSWORD = "admin1234"; // Change this to your back office password
 
 const LOCATIONS = [
@@ -503,7 +503,11 @@ function doLogin() {
     document.getElementById('dashboard').style.display    = 'block';
     document.getElementById('logout-btn').style.display   = 'block';
     document.getElementById('login-error').style.display  = 'none';
-    setQuick('today');
+    // Force correct today date on load
+    const t = new Date();
+    const iso = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+    document.getElementById('f-date-from').value = iso;
+    document.getElementById('f-date-to').value   = iso;
     runReport();
   } else {
     document.getElementById('login-error').style.display = 'block';
