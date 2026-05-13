@@ -1325,12 +1325,20 @@ function showSuccessScreen(emp, action, now) {
 }
 
 function formatShiftInfo(emp, action, now) {
-  if (action === 'CLOCK_OUT' && emp.clockInTime) {
-    const ms   = now - emp.clockInTime;
-    const hrs  = Math.floor(ms / 3600000);
-    const mins = Math.floor((ms % 3600000) / 60000);
-    const inStr = emp.clockInTime.toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:true});
-    return `${inStr} → Total: ${hrs}h ${mins}m`;
+  if (action === 'CLOCK_OUT') {
+    // Only calculate if clockInTime is a valid recent date (not Dec 30 1899 garbage)
+    if (emp.clockInTime && emp.clockInTime instanceof Date) {
+      const yr = emp.clockInTime.getFullYear();
+      if (yr > 2000) {
+        const ms   = now - emp.clockInTime;
+        const hrs  = Math.floor(ms / 3600000);
+        const mins = Math.floor((ms % 3600000) / 60000);
+        const inStr = emp.clockInTime.toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:true});
+        return `${inStr} → Total: ${hrs}h ${mins}m`;
+      }
+    }
+    // Fallback when clockInTime not available (page was refreshed)
+    return now.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric', year:'numeric'});
   }
   return now.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric', year:'numeric'});
 }
