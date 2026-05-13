@@ -319,6 +319,39 @@
   .page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
   .page-info { font-size: 13px; color: var(--text-light); padding: 0 8px; }
 
+  /* ── SUMMARY ROW ── */
+  .summary-row td { padding: 14px 16px; }
+  .summary-row:hover td { background: var(--cream); cursor: pointer; }
+  .expand-btn {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 1.5px solid var(--cream-mid);
+    background: var(--white); color: var(--text-light);
+    font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.18s; margin: 0 auto;
+  }
+  .expand-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .expand-btn.open { background: var(--brown-dark); color: var(--gold-pale); border-color: var(--brown-dark); transform: rotate(180deg); }
+
+  /* ── DETAIL ROWS (expanded) ── */
+  .detail-rows { display: none; }
+  .detail-rows.open { display: table-row-group; }
+  .detail-row td {
+    padding: 9px 16px 9px 32px;
+    background: var(--cream);
+    font-size: 12px; color: var(--text-mid);
+    border-bottom: 1px solid var(--cream-mid);
+  }
+  .detail-row:last-child td { border-bottom: 2px solid var(--cream-mid); }
+
+  /* Employee name in summary */
+  .emp-summary-name { font-weight: 600; font-size: 14px; color: var(--text-dark); }
+  .emp-summary-id   { font-size: 11px; color: var(--text-light); }
+  .emp-summary-pos  { font-size: 11px; color: var(--gold); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .hours-big { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--brown-warm); }
+  .days-count { font-size: 22px; font-weight: 700; font-family: 'Playfair Display', serif; color: var(--brown-dark); text-align: center; }
+
   @media (max-width: 768px) {
     #dashboard { padding: 20px 16px; }
     .filter-grid { grid-template-columns: 1fr 1fr; }
@@ -469,15 +502,12 @@ let sortDir     = 'desc';
       <table>
         <thead>
           <tr>
-            <th onclick="sortBy('date')">Date <span class="sort-icon">↕</span></th>
+            <th onclick="sortBy('name')" style="width:220px">Employee <span class="sort-icon">↕</span></th>
             <th onclick="sortBy('location')">Location <span class="sort-icon">↕</span></th>
-            <th onclick="sortBy('name')">Employee <span class="sort-icon">↕</span></th>
-            <th>Clock In</th>
-            <th>Break Start</th>
-            <th>Break End</th>
-            <th>Clock Out</th>
-            <th onclick="sortBy('totalHours')">Total Hours <span class="sort-icon">↕</span></th>
-            <th>Status</th>
+            <th style="text-align:center">Days Worked</th>
+            <th onclick="sortBy('totalMins')" style="text-align:center">Total Hours <span class="sort-icon">↕</span></th>
+            <th style="text-align:center">Incomplete</th>
+            <th style="width:40px"></th>
           </tr>
         </thead>
         <tbody id="table-body">
@@ -640,46 +670,127 @@ function updateSummary() {
   document.getElementById('s-avg').textContent        = avgStr;
 }
 
+// ── Group rows by employee for summary view ──
+function groupByEmployee(rows) {
+  const map = new Map();
+  rows.forEach(r => {
+    const key = r.id + '|' + r.location;
+    if (!map.has(key)) {
+      map.set(key, {
+        id: r.id, name: r.name, location: r.location,
+        position: r.position || '',
+        days: [], totalMins: 0, incomplete: 0
+      });
+    }
+    const emp = map.get(key);
+    const mins = parseHours(r.totalHours);
+    const isIncomplete = (!r.clockOut || r.clockOut === '' || r.clockOut === '—') && r.clockIn && r.clockIn !== '';
+    const isFlagged = r.notes && r.notes.includes('⚠');
+    emp.days.push({
+      date: r.date, clockIn: r.clockIn, breakStart: r.breakStart,
+      breakEnd: r.breakEnd, clockOut: r.clockOut,
+      totalHours: r.totalHours, status: r.status, notes: r.notes || ''
+    });
+    emp.totalMins += mins;
+    if (isIncomplete || isFlagged) emp.incomplete++;
+  });
+  return Array.from(map.values());
+}
+
 // ── Render table ──
 function renderTable() {
-  const tbody     = document.getElementById('table-body');
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  if (currentPage > totalPages) currentPage = 1;
-
-  const start = (currentPage - 1) * PAGE_SIZE;
-  const page  = filtered.slice(start, start + PAGE_SIZE);
-
-  document.getElementById('result-count').innerHTML =
-    `Showing <strong>${filtered.length}</strong> record${filtered.length !== 1 ? 's' : ''}`;
-  document.getElementById('page-info-top').textContent =
-    totalPages > 1 ? `Page ${currentPage} of ${totalPages}` : '';
+  const tbody = document.getElementById('table-body');
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">
       <div class="empty-icon">🔍</div>
       <p>No records found for the selected filters.</p>
     </div></td></tr>`;
+    document.getElementById('result-count').innerHTML = 'No records found';
     document.getElementById('pagination').style.display = 'none';
     return;
   }
 
-  tbody.innerHTML = page.map(r => {
-    const statusClass = r.status === 'In' ? 'badge-in' : r.status === 'Break' ? 'badge-break' : 'badge-out';
-    const statusText  = r.status === 'In' ? 'Active' : r.status === 'Break' ? 'On Break' : r.status === 'Out' ? 'Completed' : r.status || '—';
-    return `<tr>
-      <td>${formatDisplayDate(r.date)}</td>
-      <td><span class="location-chip">${r.location}</span></td>
-      <td><strong>${r.name}</strong><br><span style="font-size:11px;color:var(--text-light)">${r.id}</span></td>
-      <td class="time">${r.clockIn  || '—'}</td>
-      <td class="time">${r.breakStart || '—'}</td>
-      <td class="time">${r.breakEnd   || '—'}</td>
-      <td class="time">${r.clockOut   || '—'}</td>
-      <td class="hours">${r.totalHours || '—'}</td>
-      <td><span class="badge ${statusClass}">${statusText}</span></td>
-    </tr>`;
-  }).join('');
+  const grouped = groupByEmployee(filtered);
 
-  renderPagination(totalPages);
+  // Sort grouped
+  grouped.sort((a, b) => {
+    if (sortCol === 'totalMins') return sortDir === 'asc' ? a.totalMins - b.totalMins : b.totalMins - a.totalMins;
+    if (sortCol === 'name')     return sortDir === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+    if (sortCol === 'location') return sortDir === 'asc' ? a.location.localeCompare(b.location) : b.location.localeCompare(a.location);
+    return a.name.localeCompare(b.name);
+  });
+
+  document.getElementById('result-count').innerHTML =
+    `<strong>${grouped.length}</strong> employee${grouped.length !== 1 ? 's' : ''} · <strong>${filtered.length}</strong> shifts`;
+  document.getElementById('page-info-top').textContent = '';
+  document.getElementById('pagination').style.display = 'none';
+
+  tbody.innerHTML = grouped.map((emp, i) => {
+    const totalHrs  = Math.floor(emp.totalMins / 60);
+    const totalMins = emp.totalMins % 60;
+    const totalStr  = emp.totalMins > 0 ? `${totalHrs}h ${totalMins}m` : '—';
+    const hasIncomplete = emp.incomplete > 0;
+    const uid = `emp-${i}`;
+
+    // Sort days ascending
+    emp.days.sort((a,b) => a.date.localeCompare(b.date));
+
+    const detailRows = emp.days.map(d => {
+      const isIncomplete = (!d.clockOut || d.clockOut === '' || d.clockOut === '—') && d.clockIn;
+      const isFlagged    = d.notes && d.notes.includes('⚠');
+      const flag = isFlagged ? '⚠️' : isIncomplete ? '⚠️' : '✅';
+      return `<tr class="detail-row">
+        <td>${formatDisplayDate(d.date)}</td>
+        <td class="time">${d.clockIn || '—'}</td>
+        <td class="time">${d.breakStart || '—'}</td>
+        <td class="time">${d.breakEnd || '—'}</td>
+        <td class="time">${d.clockOut || '—'}</td>
+        <td style="font-weight:600;color:var(--brown-warm)">${d.totalHours || '—'} ${flag}</td>
+      </tr>`;
+    }).join('');
+
+    // Detail header row
+    const detailHeader = `<tr class="detail-row" style="background:var(--cream-dark)">
+      <td style="font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-light)">Date</td>
+      <td style="font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-light)">Clock In</td>
+      <td style="font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-light)">Break Start</td>
+      <td style="font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-light)">Break End</td>
+      <td style="font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-light)">Clock Out</td>
+      <td style="font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-light)">Hours</td>
+    </tr>`;
+
+    return `
+    <tbody class="summary-group">
+      <tr class="summary-row" onclick="toggleDetail('${uid}')">
+        <td>
+          <div class="emp-summary-name">${emp.name}</div>
+          <div class="emp-summary-id">${emp.id}</div>
+        </td>
+        <td><span class="location-chip">${emp.location}</span></td>
+        <td style="text-align:center"><div class="days-count">${emp.days.length}</div><div style="font-size:10px;color:var(--text-light);text-transform:uppercase;letter-spacing:0.5px">days</div></td>
+        <td style="text-align:center"><div class="hours-big">${totalStr}</div></td>
+        <td style="text-align:center">
+          ${hasIncomplete
+            ? `<span class="badge" style="background:var(--danger-bg);color:var(--danger)">⚠ ${emp.incomplete} shift${emp.incomplete>1?'s':''}</span>`
+            : `<span class="badge" style="background:var(--success-bg);color:var(--success)">✓ All good</span>`}
+        </td>
+        <td><button class="expand-btn" id="btn-${uid}">▾</button></td>
+      </tr>
+    </tbody>
+    <tbody class="detail-rows" id="${uid}">
+      ${detailHeader}
+      ${detailRows}
+    </tbody>`;
+  }).join('');
+}
+
+function toggleDetail(uid) {
+  const rows = document.getElementById(uid);
+  const btn  = document.getElementById('btn-' + uid);
+  const isOpen = rows.classList.contains('open');
+  rows.classList.toggle('open', !isOpen);
+  btn.classList.toggle('open', !isOpen);
 }
 
 function formatDisplayDate(dateStr) {
@@ -735,18 +846,33 @@ function showError(msg) {
 // ── Export CSV ──
 function exportCSV() {
   if (!filtered.length) { alert('No data to export.'); return; }
-  const headers = ['Date','Location','Employee ID','Employee Name','Clock In','Break Start','Break End','Clock Out','Total Hours','Status'];
-  const rows    = filtered.map(r => [
-    r.date, r.location, r.id, r.name,
-    r.clockIn, r.breakStart, r.breakEnd, r.clockOut, r.totalHours, r.status
-  ].map(v => `"${(v||'').replace(/"/g,'""')}"`).join(','));
+  // Export summary + detail
+  const grouped = groupByEmployee(filtered);
+  const lines = ['Employee Name,Employee ID,Location,Days Worked,Total Hours,Incomplete Shifts,Date,Clock In,Break Start,Break End,Clock Out,Day Hours'];
+  grouped.forEach(emp => {
+    emp.days.sort((a,b) => a.date.localeCompare(b.date));
+    const totalHrs  = Math.floor(emp.totalMins/60);
+    const totalMins = emp.totalMins%60;
+    emp.days.forEach((d, i) => {
+      lines.push([
+        i===0 ? emp.name : '',
+        i===0 ? emp.id   : '',
+        i===0 ? emp.location : '',
+        i===0 ? emp.days.length : '',
+        i===0 ? `${totalHrs}h ${totalMins}m` : '',
+        i===0 ? emp.incomplete : '',
+        d.date, d.clockIn||'', d.breakStart||'', d.breakEnd||'', d.clockOut||'', d.totalHours||''
+      ].map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(','));
+    });
+    lines.push(''); // blank between employees
+  });
 
-  const csv  = [headers.join(','), ...rows].join('\n');
+  const csv  = lines.join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `attendance_${document.getElementById('f-date-from').value}_to_${document.getElementById('f-date-to').value}.csv`;
+  a.download = `attendance_summary_${document.getElementById('f-date-from').value}_to_${document.getElementById('f-date-to').value}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }

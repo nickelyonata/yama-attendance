@@ -664,6 +664,72 @@
   }
   #toast.show { transform: translateY(0); opacity: 1; }
 
+  /* ── MY HOURS CARD ── */
+  .hours-card {
+    margin-top: 16px;
+    background: var(--cream);
+    border: 1.5px solid var(--cream-mid);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    text-align: left;
+    width: 100%;
+  }
+  .hours-card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .hours-card-title {
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text-light);
+  }
+  .period-selector {
+    display: flex; gap: 6px; align-items: center;
+  }
+  .period-btn {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 1.5px solid var(--cream-mid);
+    background: var(--white); color: var(--text-light);
+    font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .period-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .period-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .period-label-text {
+    font-size: 11px; font-weight: 600; color: var(--brown-warm);
+    min-width: 120px; text-align: center;
+  }
+  .hours-stats {
+    display: flex; gap: 10px; margin-bottom: 10px;
+  }
+  .hours-stat {
+    flex: 1; background: var(--white);
+    border-radius: var(--radius-sm);
+    padding: 10px 8px; text-align: center;
+  }
+  .hours-stat .stat-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; font-weight: 700;
+    color: var(--brown-dark); line-height: 1;
+  }
+  .hours-stat .stat-lbl {
+    font-size: 10px; color: var(--text-light);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-top: 3px;
+  }
+  .hours-shifts { max-height: 130px; overflow-y: auto; }
+  .hours-shift-row {
+    display: flex; justify-content: space-between;
+    padding: 5px 0; border-bottom: 1px solid var(--cream-mid);
+    font-size: 12px;
+  }
+  .hours-shift-row:last-child { border-bottom: none; }
+  .hours-shift-date { color: var(--text-mid); }
+  .hours-shift-hrs  { font-weight: 600; color: var(--brown-warm); }
+  .hours-shift-flag { color: var(--danger); }
+  .hours-loading { text-align: center; padding: 16px; color: var(--text-light); font-size: 13px; }
+
   /* responsive tablet adjustments */
   @media (max-width: 600px) {
     #topbar { padding: 0 16px; }
@@ -828,6 +894,21 @@ const TABLET_CONFIG = {
       <div class="action-tab" id="tab-breakend" onclick="selectAction('BREAK_END')">
         <div class="tab-icon">▶️</div>
         <div>End Break</div>
+      </div>
+    </div>
+
+    <!-- My Hours Card -->
+    <div class="hours-card" id="my-hours-card">
+      <div class="hours-card-header">
+        <span class="hours-card-title">📊 My Hours</span>
+        <div class="period-selector">
+          <button class="period-btn" id="period-prev" onclick="shiftPeriod(-1)">‹</button>
+          <span class="period-label-text" id="period-label">Loading...</span>
+          <button class="period-btn" id="period-next" onclick="shiftPeriod(1)">›</button>
+        </div>
+      </div>
+      <div id="hours-body">
+        <div class="hours-loading">Loading your hours...</div>
       </div>
     </div>
 
@@ -1257,7 +1338,6 @@ async function showActionScreen(emp) {
 
   // Wait for status fetch to complete if still in progress
   if (APP.statusFetchPromise) {
-    // Show subtle loading on action tabs
     document.querySelectorAll('.action-tab').forEach(t => {
       t.classList.add('disabled');
       t.style.opacity = '0.5';
@@ -1267,7 +1347,6 @@ async function showActionScreen(emp) {
     await APP.statusFetchPromise;
     APP.statusFetchPromise = null;
 
-    // Re-enable
     document.querySelectorAll('.action-tab').forEach(t => {
       t.style.opacity = '';
     });
@@ -1275,6 +1354,109 @@ async function showActionScreen(emp) {
   }
 
   updateActionTabs(emp);
+
+  // Load hours card for current payroll period
+  APP.hoursOffset = 0;
+  loadHoursCard(emp);
+}
+
+// ─── Payroll period helpers (must match Apps Script anchor) ───
+const PAYROLL_ANCHOR = new Date('2026-05-04T00:00:00');
+const PAYROLL_START_NUM = 10;
+
+function getPayrollPeriod(offset) {
+  const periodMs  = 14 * 24 * 60 * 60 * 1000;
+  // Current period index from anchor
+  const now       = new Date();
+  const current   = Math.floor((now - PAYROLL_ANCHOR) / periodMs);
+  const idx       = current + (offset || 0);
+  const start     = new Date(PAYROLL_ANCHOR.getTime() + idx * periodMs);
+  const end       = new Date(start.getTime() + 13 * 24 * 60 * 60 * 1000);
+  const pNum      = PAYROLL_START_NUM + idx;
+  const fmt       = d => d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+  const fmtDate   = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return {
+    number:  pNum,
+    label:   `P${pNum}: ${fmt(start)} – ${fmt(end)}`,
+    dateFrom: fmtDate(start),
+    dateTo:   fmtDate(end)
+  };
+}
+
+function shiftPeriod(dir) {
+  APP.hoursOffset = (APP.hoursOffset || 0) + dir;
+  // Prevent going into the future
+  if (APP.hoursOffset > 0) { APP.hoursOffset = 0; return; }
+  loadHoursCard(APP.selectedEmployee);
+}
+
+async function loadHoursCard(emp) {
+  const period = getPayrollPeriod(APP.hoursOffset);
+  document.getElementById('period-label').textContent = period.label;
+  document.getElementById('period-next').disabled = APP.hoursOffset >= 0;
+  document.getElementById('hours-body').innerHTML = '<div class="hours-loading">⏳ Loading...</div>';
+
+  try {
+    const params = new URLSearchParams({
+      action:   'getReport',
+      location: APP.location,
+      dateFrom: period.dateFrom,
+      dateTo:   period.dateTo,
+      employee: emp.name
+    });
+    const res  = await fetch(`${APP.scriptUrl}?${params}`);
+    const data = await res.json();
+    const rows = (data.rows || []).filter(r => r.name === emp.name);
+
+    if (rows.length === 0) {
+      document.getElementById('hours-body').innerHTML =
+        '<div class="hours-loading" style="color:var(--text-light)">No shifts recorded this period.</div>';
+      return;
+    }
+
+    // Calculate totals
+    let totalMins = 0;
+    rows.forEach(r => {
+      const m = (r.totalHours || '').match(/(\d+)h\s*(\d+)m/);
+      if (m) totalMins += parseInt(m[1]) * 60 + parseInt(m[2]);
+    });
+    const totalHrs  = Math.floor(totalMins / 60);
+    const totalMinsR = totalMins % 60;
+    const incomplete = rows.filter(r => !r.clockOut || r.clockOut === '' || r.clockOut === '—').length;
+
+    // Sort by date
+    rows.sort((a,b) => a.date.localeCompare(b.date));
+
+    const shiftRows = rows.map(r => {
+      const isIncomplete = !r.clockOut || r.clockOut === '' || r.clockOut === '—';
+      const d = new Date(r.date + 'T00:00:00');
+      const dateLabel = d.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
+      return `<div class="hours-shift-row">
+        <span class="hours-shift-date">${dateLabel}</span>
+        <span class="hours-shift-hrs">${isIncomplete ? '<span class="hours-shift-flag">⚠ Incomplete</span>' : r.totalHours || '—'}</span>
+      </div>`;
+    }).join('');
+
+    document.getElementById('hours-body').innerHTML = `
+      <div class="hours-stats">
+        <div class="hours-stat">
+          <div class="stat-val">${totalHrs}h ${totalMinsR}m</div>
+          <div class="stat-lbl">Total Hours</div>
+        </div>
+        <div class="hours-stat">
+          <div class="stat-val">${rows.length}</div>
+          <div class="stat-lbl">Days Worked</div>
+        </div>
+        ${incomplete > 0 ? `<div class="hours-stat" style="border:1.5px solid rgba(139,46,46,0.2)">
+          <div class="stat-val" style="color:var(--danger)">${incomplete}</div>
+          <div class="stat-lbl" style="color:var(--danger)">Incomplete</div>
+        </div>` : ''}
+      </div>
+      <div class="hours-shifts">${shiftRows}</div>`;
+  } catch(e) {
+    document.getElementById('hours-body').innerHTML =
+      '<div class="hours-loading" style="color:var(--danger)">Could not load hours.</div>';
+  }
 }
 
 // ─── Submit attendance event ───
