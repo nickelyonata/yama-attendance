@@ -1178,10 +1178,11 @@ function updateActionTabs(emp) {
   const isOut   = emp.status === 'out' || !emp.status;
 
   // Enable/disable tabs based on current status
-  setTabState('tab-clockin',    isOut,   'CLOCK_IN');
-  setTabState('tab-clockout',   isIn || isBreak, 'CLOCK_OUT');
-  setTabState('tab-breakstart', isIn,    'BREAK_START');
-  setTabState('tab-breakend',   isBreak, 'BREAK_END');
+  // Note: Clock Out is disabled during break — employee must End Break first
+  setTabState('tab-clockin',    isOut,    'CLOCK_IN');
+  setTabState('tab-clockout',   isIn,     'CLOCK_OUT');   // disabled during break
+  setTabState('tab-breakstart', isIn,     'BREAK_START');
+  setTabState('tab-breakend',   isBreak,  'BREAK_END');
 
   // Pre-highlight the most logical action (visual only, no auto-submit)
   const map = { CLOCK_IN:'tab-clockin', CLOCK_OUT:'tab-clockout', BREAK_START:'tab-breakstart', BREAK_END:'tab-breakend' };
