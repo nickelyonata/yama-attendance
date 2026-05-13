@@ -684,7 +684,7 @@
 // └─────────────────────────────────────────┘
 const TABLET_CONFIG = {
   LOCATION: "Yama Fremont",
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyi79TnhazOwP34KYtpAZK-KEmFz-wi0sLqUtnwQNs-_0YRa5iEJrq-ZulPGKUP2Zg5vA/exec",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyb_-TnTLaRMcBB-t9IfetIMsEqd-N5Pd5ZZ7mawfGnzvhsiu-DwZG8e0XmkfYTjooRkw/exec",
   ADMIN_PASSWORDS: {
     "Yama Spring Mountain": "admin1234",
     "Yama Flamingo":        "admin1234",
@@ -1156,18 +1156,19 @@ async function selectEmployee(empId) {
   document.getElementById('pin-error').style.display = 'none';
 
   updatePinDots();
-  showScreen('pin');
 
-  // Fetch live status from Google Sheets in background
+  // Fetch live status BEFORE showing PIN screen
   try {
     const res  = await fetch(`${APP.scriptUrl}?action=getEmployeeStatus&location=${encodeURIComponent(APP.location)}&employeeId=${encodeURIComponent(emp.id)}`);
     const data = await res.json();
     emp.status      = data.status || 'out';
     emp.clockInTime = data.clockInTime ? new Date(data.clockInTime) : null;
   } catch(e) {
-    // If fetch fails, default to 'out' so Clock In is always available
     emp.status = emp.status || 'out';
   }
+
+  // Now show PIN screen — status is already updated
+  showScreen('pin');
 }
 
 function updateActionTabs(emp) {
