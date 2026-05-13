@@ -1143,7 +1143,7 @@ function getInitials(name) {
 }
 
 // ─── Select employee → PIN screen ───
-function selectEmployee(empId) {
+async function selectEmployee(empId) {
   const emp = APP.employees.find(e => e.id === empId);
   if (!emp) return;
   APP.selectedEmployee = emp;
@@ -1157,6 +1157,17 @@ function selectEmployee(empId) {
 
   updatePinDots();
   showScreen('pin');
+
+  // Fetch live status from Google Sheets in background
+  try {
+    const res  = await fetch(`${APP.scriptUrl}?action=getEmployeeStatus&location=${encodeURIComponent(APP.location)}&employeeId=${encodeURIComponent(emp.id)}`);
+    const data = await res.json();
+    emp.status      = data.status || 'out';
+    emp.clockInTime = data.clockInTime ? new Date(data.clockInTime) : null;
+  } catch(e) {
+    // If fetch fails, default to 'out' so Clock In is always available
+    emp.status = emp.status || 'out';
+  }
 }
 
 function updateActionTabs(emp) {
