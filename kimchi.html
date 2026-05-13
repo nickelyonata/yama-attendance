@@ -1160,9 +1160,8 @@ function selectEmployee(empId) {
   // Show PIN screen immediately — no delay
   showScreen('pin');
 
-  // Fetch live status IN BACKGROUND while employee types PIN
-  // Status will be ready by the time they finish entering 4 digits
-  fetch(`${APP.scriptUrl}?action=getEmployeeStatus&location=${encodeURIComponent(APP.location)}&employeeId=${encodeURIComponent(emp.id)}`)
+  // Fetch live status in background — store as a promise so numConfirm can wait for it
+  APP.statusFetchPromise = fetch(`${APP.scriptUrl}?action=getEmployeeStatus&location=${encodeURIComponent(APP.location)}&employeeId=${encodeURIComponent(emp.id)}`)
     .then(r => r.json())
     .then(data => {
       emp.status      = data.status || 'out';
@@ -1247,12 +1246,34 @@ function numConfirm() {
   showActionScreen(APP.selectedEmployee);
 }
 
-function showActionScreen(emp) {
+async function showActionScreen(emp) {
   document.getElementById('action-avatar').textContent = getInitials(emp.name);
   document.getElementById('action-name').textContent = emp.name;
   document.getElementById('action-position').textContent = emp.position || '';
-  updateActionTabs(emp);
+
+  // Show action screen immediately with a loading state
   showScreen('action');
+
+  // Wait for status fetch to complete if still in progress
+  if (APP.statusFetchPromise) {
+    // Show subtle loading on action tabs
+    document.querySelectorAll('.action-tab').forEach(t => {
+      t.classList.add('disabled');
+      t.style.opacity = '0.5';
+    });
+    document.getElementById('action-tabs').style.pointerEvents = 'none';
+
+    await APP.statusFetchPromise;
+    APP.statusFetchPromise = null;
+
+    // Re-enable
+    document.querySelectorAll('.action-tab').forEach(t => {
+      t.style.opacity = '';
+    });
+    document.getElementById('action-tabs').style.pointerEvents = '';
+  }
+
+  updateActionTabs(emp);
 }
 
 // ─── Submit attendance event ───
