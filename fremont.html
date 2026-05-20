@@ -753,7 +753,7 @@
 // └─────────────────────────────────────────┘
 const TABLET_CONFIG = {
   LOCATION: "Yama Fremont",
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzvTgAo876c5c6Kwq0BGGDL3wMHNLaexZ-cWBytpGMEbi0lXjO28Mdc3r_4_6wZf_TvIQ/exec",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzS3_n7sDr3ZPucYe3Sx7llQaxJix23khoPCMX0gs5CrHB1IagjcW6buNDEfkL1ryMeRA/exec",
   ADMIN_PASSWORDS: {
     "Yama Spring Mountain": "admin1234",
     "Yama Flamingo":        "admin1234",
@@ -1424,11 +1424,35 @@ function capturePhoto() {
   document.getElementById('camera-cancel-btn').disabled  = true;
   document.getElementById('camera-status').textContent   = 'Uploading photo...';
 
-  // Store photo for submission
-  APP.capturedPhoto = dataUrl.split(',')[1]; // base64 only
+  // Compress photo before sending — resize to max 640px wide, quality 0.6
+  const compressedUrl = compressPhoto(canvas);
+  APP.capturedPhoto = compressedUrl.split(',')[1]; // base64 only
 
   stopCamera();
   submitAttendance();
+}
+
+function compressPhoto(sourceCanvas) {
+  const MAX_WIDTH = 640;
+  const MAX_HEIGHT = 480;
+  let { width, height } = sourceCanvas;
+
+  // Scale down if needed
+  if (width > MAX_WIDTH) {
+    height = Math.round(height * MAX_WIDTH / width);
+    width  = MAX_WIDTH;
+  }
+  if (height > MAX_HEIGHT) {
+    width  = Math.round(width * MAX_HEIGHT / height);
+    height = MAX_HEIGHT;
+  }
+
+  const compressed = document.createElement('canvas');
+  compressed.width  = width;
+  compressed.height = height;
+  const ctx = compressed.getContext('2d');
+  ctx.drawImage(sourceCanvas, 0, 0, width, height);
+  return compressed.toDataURL('image/jpeg', 0.6); // 60% quality
 }
 
 function stopCamera() {
