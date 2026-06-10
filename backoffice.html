@@ -730,33 +730,36 @@ function renderTable() {
   // Collapse all rows by default after render
   setTimeout(collapseAll, 300);
 
-  tbody.innerHTML = grouped.map((emp, i) => {
+  // Render as single tbody to avoid browser tbody display issues
+  let html = '';
+  grouped.forEach((emp, i) => {
     const totalHrs  = Math.floor(emp.totalMins / 60);
     const totalMins = emp.totalMins % 60;
     const totalStr  = emp.totalMins > 0 ? `${totalHrs}h ${totalMins}m` : '—';
     const hasIncomplete = emp.incomplete > 0;
     const uid = `emp-${i}`;
-
-    // Sort days ascending
     emp.days.sort((a,b) => a.date.localeCompare(b.date));
 
-    const detailRows = emp.days.map(d => {
-      const isIncomplete = (!d.clockOut || d.clockOut === '' || d.clockOut === '—') && d.clockIn;
-      const isFlagged    = d.notes && d.notes.includes('⚠');
-      const flag = isFlagged ? '⚠️' : isIncomplete ? '⚠️' : '✅';
-      return `<tr class="detail-row">
-        <td>${formatDisplayDate(d.date)}</td>
-        <td class="time">${d.clockIn || '—'}</td>
-        <td class="time">${d.breakStart || '—'}</td>
-        <td class="time">${d.breakEnd || '—'}</td>
-        <td class="time">${d.clockOut || '—'}</td>
-        <td style="font-weight:600;color:var(--brown-warm)">${d.totalHours || '—'} ${flag}</td>
-      </tr>`;
-    }).join('');
+    // Summary row
+    html += `<tr class="summary-row" style="cursor:pointer" onclick="toggleDetail('${uid}')">
+      <td>
+        <div class="emp-summary-name">${emp.name}</div>
+        <div class="emp-summary-id">${emp.id}</div>
+      </td>
+      <td><span class="location-chip">${emp.location}</span></td>
+      <td style="text-align:center"><div class="days-count">${emp.days.length}</div><div style="font-size:10px;color:var(--text-light);text-transform:uppercase;letter-spacing:0.5px">days</div></td>
+      <td style="text-align:center"><div class="hours-big">${totalStr}</div></td>
+      <td style="text-align:center">
+        ${hasIncomplete
+          ? `<span class="badge" style="background:var(--danger-bg);color:var(--danger)">⚠ ${emp.incomplete} shift${emp.incomplete>1?'s':''}</span>`
+          : `<span class="badge" style="background:var(--success-bg);color:var(--success)">✓ All good</span>`}
+      </td>
+      <td><button class="expand-btn" id="btn-${uid}" onclick="event.stopPropagation();toggleDetail('${uid}')">▾</button></td>
+    </tr>`;
 
-    // Detail header row
-    const detailHeader = `<tr class="detail-row" style="background:var(--cream-dark)">
-      <td style="font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-light)">Date</td>
+    // Detail header row — hidden by default
+    html += `<tr class="detail-header-row" id="dh-${uid}" style="display:none;background:var(--cream-dark)">
+      <td style="font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-light);padding:9px 16px 9px 32px">Date</td>
       <td style="font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-light)">Clock In</td>
       <td style="font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-light)">Break Start</td>
       <td style="font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-light)">Break End</td>
@@ -764,59 +767,48 @@ function renderTable() {
       <td style="font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-light)">Hours</td>
     </tr>`;
 
-    return `
-    <tbody class="summary-group">
-      <tr class="summary-row" onclick="toggleDetail('${uid}')" style="cursor:pointer">
-        <td>
-          <div class="emp-summary-name">${emp.name}</div>
-          <div class="emp-summary-id">${emp.id}</div>
-        </td>
-        <td><span class="location-chip">${emp.location}</span></td>
-        <td style="text-align:center"><div class="days-count">${emp.days.length}</div><div style="font-size:10px;color:var(--text-light);text-transform:uppercase;letter-spacing:0.5px">days</div></td>
-        <td style="text-align:center"><div class="hours-big">${totalStr}</div></td>
-        <td style="text-align:center">
-          ${hasIncomplete
-            ? `<span class="badge" style="background:var(--danger-bg);color:var(--danger)">⚠ ${emp.incomplete} shift${emp.incomplete>1?'s':''}</span>`
-            : `<span class="badge" style="background:var(--success-bg);color:var(--success)">✓ All good</span>`}
-        </td>
-        <td><button class="expand-btn" id="btn-${uid}" onclick="event.stopPropagation();toggleDetail('${uid}')">▾</button></td>
-      </tr>
-    </tbody>
-    <tbody class="detail-rows" id="${uid}" data-open="false">
-      ${detailHeader}
-      ${detailRows}
-    </tbody>`;
-  }).join('');
+    // Detail data rows — hidden by default
+    emp.days.forEach(d => {
+      const isIncomplete = (!d.clockOut || d.clockOut === '' || d.clockOut === '—') && d.clockIn;
+      const isFlagged    = d.notes && d.notes.includes('⚠');
+      const flag = isFlagged ? '⚠️' : isIncomplete ? '⚠️' : '✅';
+      html += `<tr class="detail-data-row detail-uid-${uid}" style="display:none">
+        <td class="detail-row" style="padding:9px 16px 9px 32px">${formatDisplayDate(d.date)}</td>
+        <td class="detail-row time">${d.clockIn || '—'}</td>
+        <td class="detail-row time">${d.breakStart || '—'}</td>
+        <td class="detail-row time">${d.breakEnd || '—'}</td>
+        <td class="detail-row time">${d.clockOut || '—'}</td>
+        <td class="detail-row" style="font-weight:600;color:var(--brown-warm)">${d.totalHours || '—'} ${flag}</td>
+      </tr>`;
+    });
+  });
+  tbody.innerHTML = html;
 }
 
 function toggleDetail(uid) {
-  const tbody = document.getElementById(uid);
-  const btn   = document.getElementById('btn-' + uid);
-  const isOpen = tbody.getAttribute('data-open') === 'true';
-  
+  const btn      = document.getElementById('btn-' + uid);
+  const header   = document.getElementById('dh-' + uid);
+  const dataRows = document.querySelectorAll('.detail-uid-' + uid);
+  const isOpen   = btn.textContent === '▴';
+
   if (isOpen) {
-    // Collapse
-    Array.from(tbody.rows).forEach(r => r.style.display = 'none');
-    tbody.setAttribute('data-open', 'false');
-    btn.classList.remove('open');
+    header.style.display = 'none';
+    dataRows.forEach(r => r.style.display = 'none');
     btn.textContent = '▾';
+    btn.classList.remove('open');
   } else {
-    // Expand
-    Array.from(tbody.rows).forEach(r => r.style.display = '');
-    tbody.setAttribute('data-open', 'true');
-    btn.classList.add('open');
+    header.style.display = '';
+    dataRows.forEach(r => r.style.display = '');
     btn.textContent = '▴';
+    btn.classList.add('open');
   }
 }
 
 function collapseAll() {
-  document.querySelectorAll('.detail-rows').forEach(tbody => {
-    Array.from(tbody.rows).forEach(r => r.style.display = 'none');
-    tbody.setAttribute('data-open', 'false');
-  });
+  // All detail rows already start hidden via inline style="display:none"
   document.querySelectorAll('.expand-btn').forEach(b => {
-    b.classList.remove('open');
     b.textContent = '▾';
+    b.classList.remove('open');
   });
 }
 
