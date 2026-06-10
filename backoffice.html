@@ -728,7 +728,7 @@ function renderTable() {
   document.getElementById('page-info-top').textContent = '';
   document.getElementById('pagination').style.display = 'none';
   // Collapse all rows by default after render
-  setTimeout(collapseAll, 50);
+  setTimeout(collapseAll, 300);
 
   tbody.innerHTML = grouped.map((emp, i) => {
     const totalHrs  = Math.floor(emp.totalMins / 60);
@@ -782,7 +782,7 @@ function renderTable() {
         <td><button class="expand-btn" id="btn-${uid}" onclick="event.stopPropagation();toggleDetail('${uid}')">▾</button></td>
       </tr>
     </tbody>
-    <tbody class="detail-rows" id="${uid}">
+    <tbody class="detail-rows" id="${uid}" data-open="false">
       ${detailHeader}
       ${detailRows}
     </tbody>`;
