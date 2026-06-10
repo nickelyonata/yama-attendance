@@ -725,6 +725,8 @@ function renderTable() {
     `<strong>${grouped.length}</strong> employee${grouped.length !== 1 ? 's' : ''} · <strong>${filtered.length}</strong> shifts`;
   document.getElementById('page-info-top').textContent = '';
   document.getElementById('pagination').style.display = 'none';
+  // Collapse all rows by default after render
+  setTimeout(collapseAll, 50);
 
   tbody.innerHTML = grouped.map((emp, i) => {
     const totalHrs  = Math.floor(emp.totalMins / 60);
@@ -791,6 +793,12 @@ function toggleDetail(uid) {
   const isOpen = rows.classList.contains('open');
   rows.classList.toggle('open', !isOpen);
   btn.classList.toggle('open', !isOpen);
+}
+
+// Collapse all on load
+function collapseAll() {
+  document.querySelectorAll('.detail-rows').forEach(r => r.classList.remove('open'));
+  document.querySelectorAll('.expand-btn').forEach(b => b.classList.remove('open'));
 }
 
 function formatDisplayDate(dateStr) {
