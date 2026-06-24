@@ -827,6 +827,27 @@ const TABLET_CONFIG = {
     <span class="search-icon">🔍</span>
     <input type="text" id="search-input" placeholder="Search by name..." oninput="filterEmployees()" />
   </div>
+
+  <!-- Check Missing Punches Button -->
+  <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+    <button onclick="checkMissingPunches()" style="
+      display:flex;align-items:center;gap:8px;
+      padding:9px 16px;
+      border-radius:8px;
+      border:1.5px solid rgba(139,46,46,0.3);
+      background:rgba(250,219,216,0.6);
+      color:#8B2E2E;
+      font-family:'DM Sans',sans-serif;
+      font-size:12px;font-weight:600;
+      letter-spacing:0.5px;text-transform:uppercase;
+      cursor:pointer;transition:all 0.18s;
+    "
+    onmouseover="this.style.background='rgba(250,219,216,1)'"
+    onmouseout="this.style.background='rgba(250,219,216,0.6)'">
+      ⚠ Check Missing Punches
+    </button>
+  </div>
+
   <div id="employee-grid">
     <div class="spinner-wrap">
       <div class="spinner"></div>
@@ -967,6 +988,56 @@ const TABLET_CONFIG = {
     </div>
 
     <button class="btn btn-outline btn-full" onclick="cancelCamera()" id="camera-cancel-btn">← Cancel</button>
+  </div>
+</div>
+
+<!-- MISSING PUNCHES MODAL -->
+<div id="modal-missing" style="
+  display:none;
+  position:fixed;inset:0;z-index:300;
+  background:rgba(42,21,6,0.6);
+  backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;
+  padding:20px;
+  animation:fadeIn 0.18s ease;
+">
+  <div style="
+    background:#fff;
+    border-radius:14px;
+    padding:32px 28px;
+    max-width:480px;width:100%;
+    box-shadow:0 8px 40px rgba(42,21,6,0.25);
+    max-height:80vh;overflow-y:auto;
+  ">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <h3 style="font-family:'Playfair Display',serif;font-size:20px;color:#2A1506;margin-bottom:4px">⚠ Missing Clock-Outs</h3>
+        <div id="missing-date-label" style="font-size:12px;color:#8A6A50;letter-spacing:0.5px"></div>
+      </div>
+      <button onclick="closeMissingModal()" style="
+        width:32px;height:32px;border-radius:50%;
+        border:1.5px solid #E8DDD0;background:#F5EFE6;
+        font-size:16px;cursor:pointer;color:#8A6A50;
+        display:flex;align-items:center;justify-content:center;
+      ">✕</button>
+    </div>
+
+    <div id="missing-loading" style="text-align:center;padding:28px;color:#8A6A50;font-size:14px">
+      <div style="width:36px;height:36px;border:3px solid #E8DDD0;border-top-color:#C8922A;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px"></div>
+      Checking today's attendance...
+    </div>
+
+    <div id="missing-content" style="display:none">
+      <div id="missing-list"></div>
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid #E8DDD0;text-align:center">
+        <button onclick="closeMissingModal()" style="
+          padding:10px 28px;border-radius:8px;
+          background:#2A1506;color:#F5DFA0;
+          border:none;font-family:'DM Sans',sans-serif;
+          font-size:13px;font-weight:600;cursor:pointer;
+        ">Close</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1873,6 +1944,78 @@ function showError(id, msg) {
   el.textContent = msg;
   el.style.display = 'block';
 }
+// ─── Check Missing Punches ───
+async function checkMissingPunches() {
+  const modal = document.getElementById('modal-missing');
+  modal.style.display = 'flex';
+  document.getElementById('missing-loading').style.display = 'block';
+  document.getElementById('missing-content').style.display = 'none';
+
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const dateLabel = today.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'});
+  document.getElementById('missing-date-label').textContent = dateLabel;
+
+  try {
+    const res  = await fetch(`${APP.scriptUrl}?action=getLog&location=${encodeURIComponent(APP.location)}&date=${dateStr}`);
+    const data = await res.json();
+    const log  = data.log || [];
+
+    // Find employees who clocked in but haven't clocked out
+    const missing = log.filter(r =>
+      r.clockIn && r.clockIn !== '—' && r.clockIn !== '' &&
+      (!r.clockOut || r.clockOut === '—' || r.clockOut === '')
+    );
+
+    document.getElementById('missing-loading').style.display = 'none';
+    document.getElementById('missing-content').style.display = 'block';
+
+    const listEl = document.getElementById('missing-list');
+    if (missing.length === 0) {
+      listEl.innerHTML = `
+        <div style="text-align:center;padding:28px">
+          <div style="font-size:40px;margin-bottom:12px">✅</div>
+          <div style="font-size:16px;font-weight:600;color:#4A7C59;margin-bottom:4px">All Good!</div>
+          <div style="font-size:13px;color:#8A6A50">Everyone has clocked out today.</div>
+        </div>`;
+    } else {
+      listEl.innerHTML = `
+        <div style="font-size:13px;color:#8B2E2E;margin-bottom:14px;font-weight:600">
+          ${missing.length} employee${missing.length > 1 ? 's' : ''} still clocked in:
+        </div>
+        ${missing.map(r => `
+          <div style="
+            display:flex;align-items:center;justify-content:space-between;
+            padding:12px 14px;
+            background:#FEF3CD;
+            border:1px solid rgba(139,105,20,0.2);
+            border-radius:8px;margin-bottom:8px;
+          ">
+            <div>
+              <div style="font-weight:600;font-size:14px;color:#1A0A02">${r.name}</div>
+              <div style="font-size:12px;color:#8A6A50;margin-top:2px">
+                Clocked in at <strong>${r.clockIn}</strong>
+                ${r.breakStart && r.breakStart !== '—' ? ` · Break: ${r.breakStart}` : ''}
+              </div>
+            </div>
+            <div style="font-size:20px">⏰</div>
+          </div>`).join('')}
+        <div style="font-size:12px;color:#8A6A50;margin-top:12px;text-align:center">
+          Please remind these employees to clock out before leaving.
+        </div>`;
+    }
+  } catch(e) {
+    document.getElementById('missing-loading').style.display = 'none';
+    document.getElementById('missing-content').style.display = 'block';
+    document.getElementById('missing-list').innerHTML =
+      `<div style="text-align:center;color:#8B2E2E;padding:20px">Could not load attendance data.<br><small>${e.message}</small></div>`;
+  }
+}
+
+function closeMissingModal() {
+  document.getElementById('modal-missing').style.display = 'none';
+}
+
 let toastTimer;
 function showToast(msg) {
   const t = document.getElementById('toast');
