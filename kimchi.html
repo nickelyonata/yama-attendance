@@ -753,7 +753,7 @@
 // └─────────────────────────────────────────┘
 const TABLET_CONFIG = {
   LOCATION: "Kimchi",
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbw7Tac-6K2sxTR3dYxA8i4xNkq89QN4-NDO0PjhUgdkebMlhWRch6vQYFt24VK85H6f/exec",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbz8DwLmaV-qrFblRa6SBWrsGITyWCohCCdNtMB1i0XDDBE36vCylpMg645PBIQDVdfAQg/exec",
   ADMIN_PASSWORDS: {
     "Yama Spring Mountain": "admin1234",
     "Yama Flamingo":        "admin1234",
@@ -902,6 +902,22 @@ const TABLET_CONFIG = {
     <div class="pin-position" id="action-position">Position</div>
     <p style="font-size:13px;color:var(--text-light);margin:10px 0 20px">What would you like to do?</p>
 
+    <!-- Short Break Warning Banner -->
+    <div id="short-break-warning" style="
+      display:none;
+      background:#FEF3CD;
+      border:1.5px solid rgba(139,105,20,0.3);
+      border-radius:8px;
+      padding:10px 14px;
+      margin-bottom:14px;
+      font-size:12px;
+      color:#8B6914;
+      font-weight:600;
+      text-align:center;
+    ">
+      ⏰ You've been working <span id="warning-time"></span> — time for your 10-min short break!
+    </div>
+
     <div class="action-tabs" id="action-tabs">
       <div class="action-tab" id="tab-clockin" onclick="selectAction('CLOCK_IN')">
         <div class="tab-icon">🟢</div>
@@ -918,6 +934,10 @@ const TABLET_CONFIG = {
       <div class="action-tab" id="tab-breakend" onclick="selectAction('BREAK_END')">
         <div class="tab-icon">▶️</div>
         <div>End Break</div>
+      </div>
+      <div class="action-tab" id="tab-shortbreak" onclick="selectAction('SHORT_BREAK')" style="grid-column:1/-1;border-color:rgba(200,146,42,0.3);background:rgba(200,146,42,0.06)">
+        <div class="tab-icon">⏱</div>
+        <div style="font-size:11px">Short Break <span style="font-size:10px;color:var(--text-light)">(10 min · paid)</span></div>
       </div>
     </div>
 
@@ -1385,10 +1405,20 @@ function updateActionTabs(emp) {
 
   // Enable/disable tabs based on current status
   // Note: Clock Out is disabled during break — employee must End Break first
-  setTabState('tab-clockin',    isOut,    'CLOCK_IN');
-  setTabState('tab-clockout',   isIn,     'CLOCK_OUT');   // disabled during break
-  setTabState('tab-breakstart', isIn,     'BREAK_START');
-  setTabState('tab-breakend',   isBreak,  'BREAK_END');
+  setTabState('tab-clockin',    isOut,       'CLOCK_IN');
+  setTabState('tab-clockout',   isIn,        'CLOCK_OUT');
+  setTabState('tab-breakstart', isIn,        'BREAK_START');
+  setTabState('tab-breakend',   isBreak,     'BREAK_END');
+  // Short Break: only available when clocked in and not already taken
+  const hasShortBreak = APP.selectedEmployee && APP.selectedEmployee.shortBreakTaken;
+  setTabState('tab-shortbreak', isIn && !hasShortBreak, 'SHORT_BREAK');
+  if (hasShortBreak) {
+    const el = document.getElementById('tab-shortbreak');
+    if (el) {
+      el.style.opacity = '0.4';
+      el.querySelector('div:last-child').textContent = '✓ Short Break Taken';
+    }
+  }
 
   // Pre-highlight the most logical action (visual only, no auto-submit)
   const map = { CLOCK_IN:'tab-clockin', CLOCK_OUT:'tab-clockout', BREAK_START:'tab-breakstart', BREAK_END:'tab-breakend' };
@@ -1603,9 +1633,27 @@ async function showActionScreen(emp) {
 
   updateActionTabs(emp);
 
+  // Check if employee needs short break reminder
+  checkShortBreakWarning(emp);
+
   // Load hours card for current payroll period
   APP.hoursOffset = 0;
   loadHoursCard(emp);
+}
+
+function checkShortBreakWarning(emp) {
+  const warning = document.getElementById('short-break-warning');
+  warning.style.display = 'none';
+  if (!emp.clockInTime || emp.shortBreakTaken || emp.status !== 'in') return;
+
+  const now      = new Date();
+  const minsWorked = Math.floor((now - emp.clockInTime) / 60000);
+  if (minsWorked >= 225) { // 3h 45m = 225 mins
+    const hrs  = Math.floor(minsWorked / 60);
+    const mins = minsWorked % 60;
+    document.getElementById('warning-time').textContent = `${hrs}h ${mins}m`;
+    warning.style.display = 'block';
+  }
 }
 
 // ─── Payroll period helpers (must match Apps Script anchor) ───
