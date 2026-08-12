@@ -1646,8 +1646,13 @@ function checkShortBreakWarning(emp) {
   warning.style.display = 'none';
   if (!emp.clockInTime || emp.shortBreakTaken || emp.status !== 'in') return;
 
-  const now      = new Date();
-  const minsWorked = Math.floor((now - emp.clockInTime) / 60000);
+  const now = new Date();
+  const clockIn = emp.clockInTime instanceof Date ? emp.clockInTime : new Date(emp.clockInTime);
+
+  // Sanity check — clockInTime must be a valid recent date (within last 24 hours)
+  const minsWorked = Math.floor((now - clockIn) / 60000);
+  if (isNaN(minsWorked) || minsWorked < 0 || minsWorked > 1440) return; // ignore if >24h or invalid
+
   if (minsWorked >= 225) { // 3h 45m = 225 mins
     const hrs  = Math.floor(minsWorked / 60);
     const mins = minsWorked % 60;
